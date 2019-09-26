@@ -1,4 +1,4 @@
-class SCHCFragProfile:
+class SCHC_Frag_Profile:
     MAX_PACKET_SIZE = None              # maximum packet size that should ever be reconstructed by SCHC Decompression
     L2_WORD_SIZE = None                 # layer 2 word size in bits
     T = None                            # presence and number of bits for DTag (dtag_size)
@@ -15,11 +15,11 @@ class SCHCFragProfile:
     DIRECTION = None
     PROTOCOL = None
     PADDING_BITS = None                 # 0 or 1
-    SCHC_BYTES_LEN = None
+    SCHC_PACKET_BYTES_LEN = None
 
     def __init__(self, protocol, direction, schc_packet):
         self.PROTOCOL = protocol
-        self.SCHC_BYTES_LEN = len(schc_packet)
+        self.SCHC_PACKET_BYTES_LEN = len(schc_packet)
         self.direction = direction
 
         self.L2_WORD_SIZE = protocol.get_L2_WORD_SIZE(direction)
