@@ -5,7 +5,7 @@ class SCHC_Frag_Profile:
     WINDOW_SIZE = None                  # for modes that use windows
     M = None                            # number of bits for W (w_size)
     N = None                            # number of bits for FCN (fcn_size)
-    RCS_SIZE = None                     # size of RCS
+    U = None                     # size of RCS
     RCS_ALGORITHM = None                # alg. for RCS computation (default CRC32)
     RETRANSMISSION_TIMER_VALUE = None   # retransmission timer duration for F/R
     INACTIVITY_TIMER_VALUE = None       # inactivity timer duration for F/R

@@ -1,4 +1,4 @@
-class SCHC_Frag_Message
+class SCHC_Frag_Message:
 	header = None
 	payload = None
 
