@@ -27,7 +27,7 @@ class Header:
 		else:
 			self.FCN = fcn
 
-		if len(rcs) != profile.U
+		if len(rcs) != profile.U:
 			print('RCS must be of length U')
 		else:
 			self.RCS = rcs
