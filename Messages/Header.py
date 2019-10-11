@@ -48,5 +48,5 @@ class Header:
 
 		self.STRING = self.RULE_ID + self.DTAG + self.W  + self.FCN + self.RCS + self.C + self.COMPRESSED_BITMAP
 
-		if len(STRING) != length:
+		if len(self.STRING) != length:
 			print('The header has not been initialized correctly.')
