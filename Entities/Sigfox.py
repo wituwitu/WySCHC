@@ -1,10 +1,9 @@
 from Entities.Protocol import Protocol
 
-
 class Sigfox(Protocol):
 
-	DIRECTION = None
-	MODE = None
+	direction = None
+	mode = None
 
 	def __init__(self, direction, mode):
 

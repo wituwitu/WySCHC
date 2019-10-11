@@ -21,9 +21,9 @@ class SCHC_Frag_Profile:
     PADDING_BITS = None                 # 0 or 1
     SCHC_PACKET_BYTES_LEN = None
 
-    def __init__(self, protocol, direction, mode, schc_packet): # protocol should be initialized before as protocol(direction, mode)
+    def __init__(self, protocol, schc_packet):     # protocol should be initialized before as protocol(direction, mode)
 
-        self.PROTOCOL = protocol(direction, mode)
+        self.PROTOCOL = protocol
         self.SCHC_PACKET_BYTES_LEN = len(schc_packet)
         self.DIRECTION = self.PROTOCOL.direction
         self.mode = self.PROTOCOL.mode
