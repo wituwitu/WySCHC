@@ -8,21 +8,19 @@
 class Header:
 	profile = None
 
-	RULE_ID = None
-	DTAG = None
-	W = None
-	FCN = None
-	RCS = None
-	C = None
-	COMPRESSED_BITMAP = None
+	RULE_ID = 0
+	DTAG = 0
+	W = 0
+	FCN = 0
+	RCS = 0
+	C = 0
+	COMPRESSED_BITMAP = 0
 
 	STRING = ""
 
 	def __init__(self, profile, rule_id, dtag, w, fcn, c): 	# rule_id is arbitrary, as it's not applicable for F/R
 
-		length = profile.RULE_ID_SIZE + profile.T + profile.M + profile.N + profile.WINDOW_SIZE 	# + 1 ?		# The 1 is the size of C
-
-		print("This header is of length " + str(length) + " bits.")
+		self.profile = profile
 
 		if len(rule_id) != profile.RULE_ID_SIZE:
 			print('RULE must be of length RULE_ID_SIZE')
@@ -36,8 +34,8 @@ class Header:
 		else:
 			self.DTAG = dtag
 
-		if len(w) != profile.M:
-			print('W must be of length M')
+		if len(w) != profile.WINDOW_SIZE:
+			print('W must be of length WINDOW_SIZE')
 		else:
 			self.W = w
 
@@ -50,6 +48,12 @@ class Header:
 
 		self.STRING = "".join(map(str, [self.RULE_ID, self.DTAG, self.W, self.FCN])) # self.C ?
 
+	def test(self):
+		length = self.profile.RULE_ID_SIZE + self.profile.T + self.profile.M + self.profile.N + self.profile.WINDOW_SIZE  # + 1 ?		# The 1 is the size of C
+
+		print("This header is " + str(length) + " bits long.")
+
+		print("HEADER:")
 		print(self.STRING)
 
 		if len(self.STRING) != length:

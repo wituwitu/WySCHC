@@ -22,6 +22,10 @@ class Sigfox(Protocol):
 		self.RETRANSMISSION_TIMER_VALUE = 45
 		self.INACTIVITY_TIMER_VALUE = 45
 
+		self.N = 0
+
+		self.HEADER_LENGTH = 0
+
 		self.MESSAGE_INTEGRITY_CHECK_SIZE = None  # TBD
 		self.RCS_ALGORITHM = None  # TBD
 
@@ -29,6 +33,7 @@ class Sigfox(Protocol):
 			self.MTU = 12*8
 
 			if mode == "NO ACK":
+				self.HEADER_LENGTH = 8
 				self.RULE_ID_SIZE = 2			# recommended
 				self.T = 2						# recommended
 				self.N = 4						# recommended
@@ -38,6 +43,7 @@ class Sigfox(Protocol):
 				pass							# TBD
 
 			if mode == "ACK ON ERROR":
+				self.HEADER_LENGTH = 8
 				self.RULE_ID_SIZE = 2
 				self.T = 1
 				self.N = 3
@@ -47,6 +53,7 @@ class Sigfox(Protocol):
 
 		if direction == "DOWNLINK":
 			self.MTU = 8*8
+			self.HEADER_LENGTH = 8
 			if mode == "ACK ALWAYS":
 				self.RULE_ID_SIZE = 2			# recommended
 				self.T = 2						# recommended

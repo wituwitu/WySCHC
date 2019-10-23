@@ -16,11 +16,10 @@ class SCHC_Frag_Session:
 	def __init__(self, profile, schc_packet):
 		self.PROFILE = profile
 		self.SCHC_PACKET = list(schc_packet)
-		self.SCHC_PACKET = list(schc_packet)
 
-		m = self.profile.M
-		window_size = self.profile.WINDOW_SIZE
-		schc_packet_bytes_length = self.profile.SCHC_PACKET_BYTES_LENGTH
+		m = profile.M
+		window_size = profile.WINDOW_SIZE
+		schc_packet_bytes_length = profile.SCHC_PACKET_BYTES_LENGTH
 
 		if schc_packet_bytes_length < (2 ** m) * window_size:
 			print("ERROR: A Rule MUST NOT be selected if the values of M and WINDOW_SIZE for that Rule are such that "
