@@ -1,3 +1,10 @@
+# Glossary
+# T: DTag size
+# N: Fragment Compressed Number (FCN) size
+# M: Window identifier (present only if windows are used) size
+# U: Reassembly Check Sequence (RCS) size
+
+
 class Header:
 	profile = None
 
@@ -9,11 +16,13 @@ class Header:
 	C = None
 	COMPRESSED_BITMAP = None
 
-	STRING = None
+	STRING = ""
 
-	def __init__(self, profile, rule_id, dtag, w, fcn, rcs, c, compressed_bitmap):
+	def __init__(self, profile, rule_id, dtag, w, fcn, c): 	# rule_id is arbitrary, as it's not applicable for F/R
 
-		length = profile.RULE_ID_SIZE + profile.T + profile.M + profile.N + profile.U + 1 + len(compressed_bitmap)
+		length = profile.RULE_ID_SIZE + profile.T + profile.M + profile.N + profile.WINDOW_SIZE 	# + 1 ?		# The 1 is the size of C
+
+		print("This header is of length " + str(length) + " bits.")
 
 		if len(rule_id) != profile.RULE_ID_SIZE:
 			print('RULE must be of length RULE_ID_SIZE')
@@ -37,16 +46,11 @@ class Header:
 		else:
 			self.FCN = fcn
 
-		if len(rcs) != profile.U:
-			print('RCS must be of length U')
-		else:
-			self.RCS = rcs
-
 		self.C = c
 
-		self.COMPRESSED_BITMAP = compressed_bitmap
+		self.STRING = "".join(map(str, [self.RULE_ID, self.DTAG, self.W, self.FCN])) # self.C ?
 
-		self.STRING = self.RULE_ID + self.DTAG + self.W  + self.FCN + self.RCS + self.C + self.COMPRESSED_BITMAP
+		print(self.STRING)
 
 		if len(self.STRING) != length:
 			print('The header has not been initialized correctly.')

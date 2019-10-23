@@ -10,12 +10,12 @@ from Messages.Header import Header
 # 	protocol = Sigfox(direction, mode)
 
 protocol = Sigfox("UPLINK", "NO ACK")
+MTU = protocol.MTU
 
 
-data = list(range(1, 10))
-payload = ''.join(map(str, data))
+data = list(range(1, 100))
+payload = "".join(map(str, data))
 
-header = Header(protocol)
+print("The payload to be transmitted is: " + payload)
 
-schc_frag_profile = SCHC_Frag_Profile(protocol, packet)
-
+header = Header(protocol, rule_id="XX", dtag="01", w="", fcn="0000", c=0)

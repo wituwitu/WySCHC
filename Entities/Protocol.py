@@ -1,14 +1,16 @@
 class Protocol:
 	NAME = None 			# (string) Name of protocol
-	RULE_ID_SIZE = None
-	L2_WORD_SIZE = None
-	TILE_SIZE = None
-	M = None
-	N = None
-	WINDOW_SIZE = None
-	RCS_SIZE = None
+	RULE_ID_SIZE = 0
+	L2_WORD_SIZE = 0
+	TILE_SIZE = 0
+	M = 0
+	N = 0
+	WINDOW_SIZE = 0
+	RCS_SIZE = 0
 	RCS_ALGORITHM = None
-	T = None
-	MAX_ACK_REQUESTS = None
+	T = 0
+	MAX_ACK_REQUESTS = 0
+	MAX_WIND_FCN = 0
 	RETRANSMISSION_TIMER_VALUE = None
 	INACTIVITY_TIMER_VALUE = None
+	MTU = 0

@@ -1,5 +1,12 @@
 from Entities.Protocol import Protocol
 
+# Glossary
+# T: DTag size
+# N: Fragment Compressed Number (FCN) size
+# M: Window identifier (present only if windows are used) size
+# U: Reassembly Check Sequence (RCS) size
+
+
 class Sigfox(Protocol):
 
 	direction = None
@@ -7,18 +14,25 @@ class Sigfox(Protocol):
 
 	def __init__(self, direction, mode):
 
+		print("This protocol is in " + direction + " direction and " + mode + " mode.")
+
 		self.NAME = "SIGFOX"
 		self.DIRECTION = direction
 		self.MODE = mode
+		self.RETRANSMISSION_TIMER_VALUE = 45
+		self.INACTIVITY_TIMER_VALUE = 45
+
+		self.MESSAGE_INTEGRITY_CHECK_SIZE = None  # TBD
+		self.RCS_ALGORITHM = None  # TBD
 
 		if direction == "UPLINK":
+			self.MTU = 12*8
+
 			if mode == "NO ACK":
 				self.RULE_ID_SIZE = 2			# recommended
 				self.T = 2						# recommended
 				self.N = 4						# recommended
 				self.WINDOW_SIZE = 0
-				self.MESSAGE_INTEGRITY_CHECK_SIZE = None					# TBD
-				self.RCS_ALGORITHM = None		# TBD
 
 			if mode == "ACK ALWAYS":
 				pass							# TBD
@@ -26,23 +40,20 @@ class Sigfox(Protocol):
 			if mode == "ACK ON ERROR":
 				self.RULE_ID_SIZE = 2
 				self.T = 1
-				self.WINDOW_SIZE = 2			# recommended to be single
 				self.N = 3
+				self.WINDOW_SIZE = 2			# recommended to be single  (what does this mean?)
 				self.MAX_ACK_REQUESTS = 2		# SHOULD be
 				self.MAX_WIND_FCN = 6			# SHOULD be
-				self.MESSAGE_INTEGRITY_CHECK_SIZE = None  # TBD
-				self.RCS_ALGORITHM = None  # TBD
 
 		if direction == "DOWNLINK":
+			self.MTU = 8*8
 			if mode == "ACK ALWAYS":
 				self.RULE_ID_SIZE = 2			# recommended
 				self.T = 2						# recommended
 				self.N = 3						# recommended
-				self.WINDOW_SIZE = 1			# MUST be present, recommended to be single
+				self.WINDOW_SIZE = 1			# MUST be present, recommended to be single (what does this mean?)
 				self.MAX_ACK_REQUESTS = 2		# SHOULD be
 				self.MAX_WIND_FCN = 6			# SHOULD be
-				self.MESSAGE_INTEGRITY_CHECK_SIZE = None 		# TBD
-				self.RCS_ALGORITHM = None 		# TBD
 
 				# Sigfox downlink frames have a fixed length of 8 bytes, which means
 				#    that default SCHC algorithm for padding cannot be used.  Therefore,
@@ -53,3 +64,17 @@ class Sigfox(Protocol):
 
 			else:
 				pass
+
+		print("-----VALUES-----")
+		print("RULE_ID_SIZE = " + str(self.RULE_ID_SIZE))
+		print("T = " + str(self.T))
+		print("N = " + str(self.N))
+		print("WINDOW_SIZE = " + str(self.WINDOW_SIZE))
+		print("MAX_ACK_REQUESTS = " + str(self.MAX_ACK_REQUESTS))
+		print("MAX_WIND_FCN = " + str(self.MAX_WIND_FCN))
+		print("")
+		print("MTU = " + str(self.MTU))
+
+		length = self.RULE_ID_SIZE + self.T + self.N + self.WINDOW_SIZE
+
+		print("All headers should be " + str(length) + " bits long (" + str(length/8) + " bytes).")
