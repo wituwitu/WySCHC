@@ -19,8 +19,8 @@ class Sigfox(Protocol):
 		self.NAME = "SIGFOX"
 		self.DIRECTION = direction
 		self.MODE = mode
-		self.RETRANSMISSION_TIMER_VALUE = 45
-		self.INACTIVITY_TIMER_VALUE = 45
+		self.RETRANSMISSION_TIMER_VALUE = 45	# enough to let a downlink message to be sent if needed
+		self.INACTIVITY_TIMER_VALUE = 60		# for demo purposes
 
 		self.N = 0
 
@@ -47,8 +47,8 @@ class Sigfox(Protocol):
 				self.RULE_ID_SIZE = 2
 				self.T = 1
 				self.N = 3
-				self.WINDOW_SIZE = 2			# recommended to be single  (what does this mean?)
-				self.MAX_ACK_REQUESTS = 2		# SHOULD be
+				self.WINDOW_SIZE = 2			# recommended to be single
+				self.MAX_ACK_REQUESTS = 3		# SHOULD be 2
 				self.MAX_WIND_FCN = 6			# SHOULD be
 
 		if direction == "DOWNLINK":
@@ -58,8 +58,8 @@ class Sigfox(Protocol):
 				self.RULE_ID_SIZE = 2			# recommended
 				self.T = 2						# recommended
 				self.N = 3						# recommended
-				self.WINDOW_SIZE = 1			# MUST be present, recommended to be single (what does this mean?)
-				self.MAX_ACK_REQUESTS = 2		# SHOULD be
+				self.WINDOW_SIZE = 1			# MUST be present, recommended to be single
+				self.MAX_ACK_REQUESTS = 3		# SHOULD be 2
 				self.MAX_WIND_FCN = 6			# SHOULD be
 
 				# Sigfox downlink frames have a fixed length of 8 bytes, which means
