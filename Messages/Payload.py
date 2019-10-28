@@ -1,3 +1,6 @@
 class Payload:
-	def __init__(self):
-		pass
+	payload = None
+
+	def __init__(self, profile, payload):
+		self.profile = profile
+		self.payload = payload

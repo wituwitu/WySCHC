@@ -19,7 +19,7 @@ class Sigfox(Protocol):
 		self.NAME = "SIGFOX"
 		self.DIRECTION = direction
 		self.MODE = mode
-		self.RETRANSMISSION_TIMER_VALUE = 45	# enough to let a downlink message to be sent if needed
+		self.RETRANSMISSION_TIMER_VALUE = 45		# enough to let a downlink message to be sent if needed
 		self.INACTIVITY_TIMER_VALUE = 60		# for demo purposes
 
 		self.N = 0

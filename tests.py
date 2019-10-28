@@ -1,4 +1,5 @@
 from Entities import SCHC_Frag_Session
+from Entities.Reassembler import Reassembler
 from Entities.SCHC_Frag_Profile import SCHC_Frag_Profile
 from Entities.Sigfox import Sigfox
 from Messages.Header import Header
@@ -29,3 +30,6 @@ fragment_list = fragmenter.fragment()
 print("Fragments:")
 for fragment in fragment_list:
 	print(fragment)
+
+reassembler = Reassembler(protocol, fragment_list)
+reassembler.reassemble()
