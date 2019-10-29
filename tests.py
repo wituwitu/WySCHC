@@ -31,5 +31,14 @@ print("Fragments:")
 for fragment in fragment_list:
 	print(fragment)
 
+print("Rebuilding message...")
+
 reassembler = Reassembler(protocol, fragment_list)
-reassembler.reassemble()
+rebuild = reassembler.reassemble()
+
+print("Rebuilt message: \n" + rebuild)
+
+if payload in rebuild:
+	print("The message has been rebuilt successfully :D ! Though padding bits are still present.")
+else:
+	print("There has been an error rebuilding the packet ):")

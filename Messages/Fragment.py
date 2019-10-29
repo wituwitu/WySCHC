@@ -3,7 +3,7 @@ from Messages.Header import Header
 from Messages.Payload import Payload
 
 
-class Fragment(SCHC_Frag_Message):
+class Fragment:
 
     profile = None
     header_length = 0
@@ -28,9 +28,9 @@ class Fragment(SCHC_Frag_Message):
         payload = fragment[self.header_length:]
 
         rule_id = header[:self.rule_id_size]
-        dtag = header[self.rule_id_size:self.t]
-        window = header[self.t:self.window_size]
-        fcn = header[self.window_size:self.n]
+        dtag = header[self.rule_id_size:self.rule_id_size + self.t]
+        window = header[self.rule_id_size + self.t:self.rule_id_size + self.t + self.window_size]
+        fcn = header[self.rule_id_size + self.t + self.window_size:self.rule_id_size + self.t + self.window_size + self.n]
         c = "X"
 
         self.header = Header(self.profile, rule_id, dtag, window, fcn, c)
