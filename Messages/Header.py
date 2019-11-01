@@ -6,55 +6,57 @@
 
 
 class Header:
-	profile = None
+    profile = None
 
-	RULE_ID = 0
-	DTAG = 0
-	W = 0
-	FCN = 0
-	RCS = 0
-	C = 0
-	COMPRESSED_BITMAP = 0
+    RULE_ID = ""
+    DTAG = ""
+    W = ""
+    FCN = ""
+    RCS = ""
+    C = ""
+    COMPRESSED_BITMAP = ""
 
-	STRING = ""
+    string = ""
 
-	def __init__(self, profile, rule_id, dtag, w, fcn, c): 	# rule_id is arbitrary, as it's not applicable for F/R
+    def __init__(self, profile, rule_id, dtag, w, fcn, c=""):  # rule_id is arbitrary, as it's not applicable for F/R
 
-		self.profile = profile
+        self.profile = profile
 
-		if len(rule_id) != profile.RULE_ID_SIZE:
-			print('RULE must be of length RULE_ID_SIZE')
-		else:
-			self.RULE_ID = rule_id
+        direction = profile.direction
 
-		if profile.T == 0:
-			self.DTAG = None
-		elif len(dtag) != profile.T:
-			print('DTAG must be of length T')
-		else:
-			self.DTAG = dtag
+        if direction == "DOWNLINK":
+            self.FCN = ""
+            self.C = c
 
-		if len(w) != profile.WINDOW_SIZE:
-			print('W must be of length WINDOW_SIZE')
-		else:
-			self.W = w
+        if len(rule_id) != profile.RULE_ID_SIZE:
+            print('RULE must be of length RULE_ID_SIZE')
+        else:
+            self.RULE_ID = rule_id
 
-		if len(fcn) != profile.N:
-			print('FCN must be of length N')
-		else:
-			self.FCN = fcn
+        if profile.T == "0":
+            self.DTAG = ""
+        elif len(dtag) != profile.T:
+            print('DTAG must be of length T')
+        else:
+            self.DTAG = dtag
 
-		self.C = c
+        if len(w) != profile.WINDOW_SIZE:
+            print('W must be of length WINDOW_SIZE')
+        else:
+            self.W = w
 
-		self.STRING = "".join(map(str, [self.RULE_ID, self.DTAG, self.W, self.FCN])) # self.C ?
+        if fcn != "":
+            if len(fcn) != profile.N:
+                print('FCN must be of length N')
+            else:
+                self.FCN = fcn
 
-	def test(self):
-		length = self.profile.RULE_ID_SIZE + self.profile.T + self.profile.M + self.profile.N + self.profile.WINDOW_SIZE  # + 1 ?		# The 1 is the size of C
+        self.string = "".join([self.RULE_ID, self.DTAG, self.W, self.FCN, self.C])  # self.C ?
 
-		print("This header is " + str(length) + " bits long.")
+    def test(self):
 
-		print("HEADER:")
-		print(self.STRING)
+        print("HEADER:")
+        print(self.string)
 
-		if len(self.STRING) != length:
-			print('The header has not been initialized correctly.')
+        if len(self.string) != self.profile.HEADER_LENGTH:
+            print('The header has not been initialized correctly.')

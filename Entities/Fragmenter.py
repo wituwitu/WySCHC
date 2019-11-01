@@ -35,13 +35,19 @@ class Fragmenter:
 				print("Applying padding for final fragment...")
 				while len(fragment_payload) < payload_max_length:
 					fragment_payload += "X"
+					# Uplink frames can contain a payload size from 0 to 96 bits, that is 0
+					# to 12 bytes.  The radio protocol allows sending zero bits or one
+					# single bit of information for binary applications (e.g. status), or
+					# an integer number of bytes.  Therefore, for 2 or more bits of payload
+					# it is required to add padding to the next integer number of bytes.
+					# The reason for this flexibility is to optimize transmission time and
+					# hence save battery consumption at the device.
 
 			else:
 				header = Header(self.profile, rule_id="RR", dtag="D", w=w, fcn=fcn, c=0)
 
-
-			fragment = header.STRING + fragment_payload
-			print("[" + header.STRING + "]" + fragment_payload)
+			fragment = header.string + fragment_payload
+			# print("[" + header.STRING + "]" + fragment_payload)
 			fragment_list.append(fragment)
 
 		print("Fragmentation complete.")

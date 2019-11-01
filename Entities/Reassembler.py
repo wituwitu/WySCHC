@@ -1,5 +1,4 @@
 from Messages.Fragment import Fragment
-from anytree import Node
 
 
 class Reassembler:

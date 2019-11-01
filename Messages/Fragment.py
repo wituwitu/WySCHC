@@ -31,7 +31,7 @@ class Fragment:
         dtag = header[self.rule_id_size:self.rule_id_size + self.t]
         window = header[self.rule_id_size + self.t:self.rule_id_size + self.t + self.window_size]
         fcn = header[self.rule_id_size + self.t + self.window_size:self.rule_id_size + self.t + self.window_size + self.n]
-        c = "X"
+        c = ""
 
         self.header = Header(self.profile, rule_id, dtag, window, fcn, c)
         self.payload = Payload(self.profile, payload)
