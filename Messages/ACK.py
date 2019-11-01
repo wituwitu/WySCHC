@@ -16,3 +16,5 @@ class ACK:
 		print("Applying padding for ACK...")
 		while len(self.header.string + self.payload) < profile.MTU:
 			self.payload += "X"
+
+		print("ACK is now " + str(len(self.header.string + self.payload)) + " bits long")
