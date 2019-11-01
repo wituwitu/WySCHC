@@ -12,7 +12,7 @@ class Fragmenter:
 		self.schc_packet = schc_packet
 
 	def fragment(self):
-		payload_max_length = 14 - self.profile.HEADER_LENGTH  # self.profile.MTU - header_length
+		payload_max_length = self.profile.MTU - self.profile.HEADER_LENGTH  # self.profile.MTU - header_length
 		message = self.schc_packet
 		fragment_list = []
 		n = self.profile.N
