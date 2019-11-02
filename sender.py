@@ -15,7 +15,7 @@ profile_downlink = Sigfox("DOWNLINK", "NO ACK")
 buffer_size = profile_uplink.MTU
 the_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-if len(sys.argv) != 2:
+if len(sys.argv) != 4:
     print("python sender.py [IP] [PORT] [FILENAME]")
     sys.exit()
 
