@@ -40,7 +40,7 @@ while True:
     seq = (seq + 1) % 2
 
     # seteamos un timeout (bloqueamos el socket después de 0.5s)
-    the_socket.settimeout(0.5)
+    the_socket.settimeout(0.5) # QUE HACE ESTO¿¿¿¿¿¿
 
     # contador de intentos
     try_counter = 0

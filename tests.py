@@ -55,4 +55,3 @@ print(profile_downlink.direction)
 
 print("Generating ACK")
 ack_test = ACK(profile_downlink, fragment)
-# el header es de 6 bits. Está bien esto?

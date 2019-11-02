@@ -54,11 +54,11 @@ class Sigfox(Protocol):
         if direction == "DOWNLINK":
             self.MTU = 8 * 8
             if mode == "NO ACK":
-                self.HEADER_LENGTH = 6
+                self.HEADER_LENGTH = 8
                 self.RULE_ID_SIZE = 2
-                self.T = 2
+                self.T = 1
+                self.WINDOW_SIZE = 2
                 self.N = 3
-                self.WINDOW_SIZE = 1
             if mode == "ACK ALWAYS":
                 self.HEADER_LENGTH = 8
                 self.RULE_ID_SIZE = 2  # recommended

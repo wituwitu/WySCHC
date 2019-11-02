@@ -4,11 +4,15 @@ import os
 
 from Entities.Fragmenter import Fragmenter
 from Entities.Sigfox import Sigfox
+from Messages.ACK import ACK
+from Messages.Fragment import Fragment
 
 print("This is the SENDER script for a Sigfox Uplink transmission example")
 
-profile = Sigfox("UPLINK", "ACK ON ERROR")
-buffer_size = profile.MTU
+profile_uplink = Sigfox("UPLINK", "ACK ON ERROR")
+profile_downlink = Sigfox("DOWNLINK", "NO ACK")
+
+buffer_size = profile_uplink.MTU
 the_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 if len(sys.argv) != 2:
@@ -24,16 +28,72 @@ percent = round(0, 2)
 address = (ip, port)
 
 payload = open(filename, "rb")
-
-fragmenter = Fragmenter(profile, payload)
+fragmenter = Fragmenter(profile_uplink, payload)
+payload.close()
 fragment_list = fragmenter.fragment()
 
-for fragment in fragment_list:
-    the_socket.sendto(fragment, address)
-    the_socket.settimeout(0.5)
-    try_counter = 0
+ack_list = []
+sp_ack = None
+i = 0
 
-    while True:
+while i < len(fragment_list):
+    try:
+        data = fragment_list[i]
+    except IndexError:
+        the_socket.sendto("".encode(), address)
+        break
 
+    the_socket.sendto(data.encode(), address)
+
+    current_size += len(data)
+    percent = round(float(current_size) / float(total_size) * 100, 2)
+
+    print("Sending...")
+    print(str(current_size) + " / " + str(total_size) + ", " + str(percent) + "%")
+
+    if data.is_all_0():
+        the_socket.settimeout(profile_uplink.RETRANSMISSION_TIMER_VALUE)
+        while True:
+            try:
+                ack, address = the_socket.recvfrom(profile_downlink.MTU)
+                ack_list.append(ack)
+
+            except:
+                break
+
+        # En este caso, se tiene la opción de enviar al final un SCHC ACK REQ para verificar que los
+        # fragmentos retransmitidos han sido recibidos correctamente, o no. Esto es algo que aún no me queda
+        # claro si sea estrictamente necesario o si podemos simplemente continuar con la transmisión de los
+        # siguientes fragmentos… Tiendo a esta última opción.
+
+        for ack in ack_list:  # para cada ACK recibido
+            fcn = ACK(profile_downlink, ack).header.FCN  # obtengo su FCN
+            for fragment in fragment_list:
+                if fcn == Fragment(profile_uplink, fragment).header.FCN:
+                    the_socket.sendto(fragment.encode(), address)
+                    # reenvío todos los fragmentos cuyos FCN aparezcan en ACKs
+                else:
+                    print("Received ACK but no corresponding fragment found D:")
+
+        ack_list = []
+
+    if data.is_all_1():
+        print("Waiting for last ACK...")
+        requests = 1
+        while requests <= profile_uplink.MAX_ACK_REQUESTS:
+            try:
+                sp_ack, address = the_socket.recvfrom(profile_downlink.MTU)
+                print("Last ACK received. End of transmission.")
+                break
+            except:
+                requests += 1
+
+    if sp_ack:
+        break
+    else:
+        i += 1
+
+
+the_socket.close()
 
 
