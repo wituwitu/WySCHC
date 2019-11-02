@@ -20,3 +20,6 @@ class ACK:
             self.payload += "X"
 
         print("ACK is now " + str(len(self.header.string + self.payload)) + " bits long")
+
+    def to_string(self):
+        return self.header.string + self.payload

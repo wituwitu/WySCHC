@@ -12,7 +12,6 @@ print("This is the SENDER script for a Sigfox Uplink transmission example")
 profile_uplink = Sigfox("UPLINK", "ACK ON ERROR")
 profile_downlink = Sigfox("DOWNLINK", "NO ACK")
 
-buffer_size = profile_uplink.MTU
 the_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 if len(sys.argv) != 4:
@@ -56,7 +55,7 @@ while i < len(fragment_list):
         while True:
             try:
                 ack, address = the_socket.recvfrom(profile_downlink.MTU)
-                ack_list.append(ack)
+                ack_list.append(ack.decode())
 
             except:
                 break
@@ -67,7 +66,9 @@ while i < len(fragment_list):
         # siguientes fragmentos… Tiendo a esta última opción.
 
         for ack in ack_list:  # para cada ACK recibido
-            fcn = ACK(profile_downlink, ack).header.FCN  # obtengo su FCN
+            fcn = ACK(profile_downlink, ack).header.FCN
+            # obtengo su FCN # OJO AQUI: ACK crea un ACK para el ACK, no lo reinstaura.
+            # Pero los headers son iwales así que igual apaña
             for fragment in fragment_list:
                 if fcn == Fragment(profile_uplink, fragment).header.FCN:
                     the_socket.sendto(fragment.encode(), address)
