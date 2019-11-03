@@ -18,14 +18,18 @@ class Fragmenter:
 		n = self.profile.N
 		window_size = self.profile.WINDOW_SIZE
 
-		number_of_fragments = ceil(len(message) / payload_max_length)
+		# print(str(len(message)) + "\n" + str(payload_max_length))
+
+		# print(str(ceil(len(message) / payload_max_length)))
+
+		number_of_fragments = int(ceil(float(len(message)) / payload_max_length))
 
 		print("Fragmenting message into " + str(number_of_fragments) + " pieces...")
 
 		for i in range(number_of_fragments):
 			print("Fragment number " + str(i))
 
-			w = bin(floor((i/(2**n - 1) % (2**window_size))))[2:].zfill(2)
+			w = bin(int(floor((i/(2**n - 1) % (2**window_size)))))[2:].zfill(2)
 			fcn = bin((2 ** n - 2) - (i % (2 ** n - 1)))[2:].zfill(3)
 
 			fragment_payload = message[i * payload_max_length:(i + 1) * payload_max_length]
@@ -47,7 +51,7 @@ class Fragmenter:
 				header = Header(self.profile, rule_id="RR", dtag="D", w=w, fcn=fcn, c=0)
 
 			fragment = header.string + fragment_payload
-			# print("[" + header.STRING + "]" + fragment_payload)
+			print("[" + header.string + "]" + fragment_payload)
 			fragment_list.append(fragment)
 
 		print("Fragmentation complete.")

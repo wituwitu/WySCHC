@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import socket
 import sys
 
@@ -25,27 +27,31 @@ the_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 the_socket.bind((ip, port))
 
 current_size = 0
-can_receive = True
 
-fcn = "".zfill(profile_uplink.N)
-
-the_socket.settimeout(0.5)  # No sé qué poner acá
-
-
+n = profile_uplink.N
 
 fragments = []
 ack_list = []
 
+i = 0
+
 while True:
+	fcn = bin((2 ** n - 2) - (i % (2 ** n - 1)))[2:].zfill(3)
+
+	the_socket.settimeout(profile_uplink.INACTIVITY_TIMER_VALUE)
+
 	fragment, address = the_socket.recvfrom(profile_uplink.MTU)
 
 	if fragment:
 		if fragment.decode() == "":
 			break
 		fragment_message = Fragment(profile_uplink, fragment.decode())
+
+		print("FCNs \n Received: " + fragment_message.header.FCN + "\n Expected: " + fcn)
+
 		if fragment_message.header.FCN != fcn:
 			print("Wrong fragment received. Generating ACK...")
-			ack = ACK(profile_downlink, fragment)
+			ack = ACK(profile_downlink, fragment_message)
 			ack_list.append(ack)
 		else:
 			fragments.append(fragment)
