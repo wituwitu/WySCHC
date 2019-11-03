@@ -80,6 +80,7 @@ while i < len(fragment_list):
         print("Waiting for last ACK...")
         requests = 1
         while requests <= profile_uplink.MAX_ACK_REQUESTS:
+            the_socket.settimeout(profile_uplink.RETRANSMISSION_TIMER_VALUE)
             try:
                 last_ack, address = the_socket.recvfrom(profile_downlink.MTU)
                 print("Last ACK received. End of transmission.")
@@ -87,9 +88,9 @@ while i < len(fragment_list):
                 break
             except:
                 requests += 1
-                print("Trying for " + str(requests) + " time")
-        if requests > profile_uplink.MAX_ACK_REQUESTS:
-            print("MAX_ACK_REQUESTS reached. Wat do?")
+                print("Trying for " + str(requests) + "th time")
+            if requests > profile_uplink.MAX_ACK_REQUESTS:
+                print("MAX_ACK_REQUESTS reached. Wat do?")
 
     for ack in ack_list:  # para cada ACK recibido
         fcn = ACK(profile_downlink, ack).header.FCN

@@ -49,6 +49,23 @@ while True:
 
 		print("FCNs \n Received: " + fragment_message.header.FCN + "\n Expected: " + fcn)
 
+		if fragment_message.is_all_0():
+			fragments.append(fragment)
+			current_size += len(fragment)
+			print("Received " + str(current_size) + " so far...")
+			print("Received All-0: Sending ACKs if they exist...")
+			for ack in ack_list:
+				the_socket.sendto(ack.to_string().encode(), address)
+
+		if fragment_message.is_all_1():
+			fragments.append(fragment)
+			current_size += len(fragment)
+			print("Received " + str(current_size) + " so far...")
+			print("Received All-1: Sending last ACK")
+			last_ack = ACK(profile_downlink, fragment_message)
+			the_socket.sendto(last_ack.to_string().encode(), address)
+			break
+
 		if fragment_message.header.FCN != fcn:
 			print("Wrong fragment received. Generating ACK...")
 			ack = ACK(profile_downlink, fragment_message)
@@ -58,15 +75,7 @@ while True:
 			current_size += len(fragment)
 			print("Received " + str(current_size) + " so far...")
 
-			if fragment_message.is_all_0():
-				print("Received All-0: Sending ACKs if they exist...")
-				for ack in ack_list:
-					the_socket.sendto(ack.to_string().encode(), address)
-
-			if fragment_message.is_all_1():
-				print("Received All-1: Sending last ACK")
-				last_ack = ACK(profile_downlink, fragment)
-				the_socket.sendto(last_ack.to_string().encode(), address)
+	i += 1
 
 the_socket.close()
 

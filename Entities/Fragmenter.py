@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from math import ceil, floor
 
 from Messages.Header import Header
@@ -36,9 +38,15 @@ class Fragmenter:
 
 			if len(fragment_payload) < payload_max_length:
 				header = Header(self.profile, rule_id="RR", dtag="D", w=w, fcn="111", c=0)
+				print("Final fragment")
 				print("Applying padding for final fragment...")
-				while len(fragment_payload) < payload_max_length:
-					fragment_payload += "X"
+
+			# Con Sigfox se debe simplificar la implementación, ya que solo hay un tile por fragmento. También,
+			# en nuestro caso consideramos que en el UL no es necesario añadir padding bits, ya que el payload puede
+			# ser de 0-12 bytes - a menos de que tu payload no este byte-aligned?
+
+				# while len(fragment_payload) < payload_max_length:
+				# 	fragment_payload += "X"
 					# Uplink frames can contain a payload size from 0 to 96 bits, that is 0
 					# to 12 bytes.  The radio protocol allows sending zero bits or one
 					# single bit of information for binary applications (e.g. status), or
