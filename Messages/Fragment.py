@@ -36,3 +36,16 @@ class Fragment:
         self.header = Header(self.profile, rule_id, dtag, window, fcn, c)
         self.payload = Payload(self.profile, payload)
 
+    def is_all_1(self):
+        fcn = self.header.FCN
+        fcn_set = set()
+        for x in fcn:
+            fcn_set.add(x)
+        return len(fcn_set) == 1 and "1" in fcn_set
+
+    def is_all_0(self):
+        fcn = self.header.FCN
+        fcn_set = set()
+        for x in fcn:
+            fcn_set.add(x)
+        return len(fcn_set) == 1 and "0" in fcn_set

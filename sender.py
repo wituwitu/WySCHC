@@ -32,7 +32,7 @@ payload.close()
 fragment_list = fragmenter.fragment()
 
 ack_list = []
-sp_ack = None
+last_ack = None
 i = 0
 
 while i < len(fragment_list):
@@ -50,7 +50,9 @@ while i < len(fragment_list):
     print("Sending...")
     print(str(current_size) + " / " + str(total_size) + ", " + str(percent) + "%")
 
-    if data.is_all_0():
+    fragment = Fragment(profile_uplink, data)
+
+    if fragment.is_all_0():
         the_socket.settimeout(profile_uplink.RETRANSMISSION_TIMER_VALUE)
         while True:
             try:
@@ -78,18 +80,19 @@ while i < len(fragment_list):
 
         ack_list = []
 
-    if data.is_all_1():
+    if fragment.is_all_1():
         print("Waiting for last ACK...")
         requests = 1
         while requests <= profile_uplink.MAX_ACK_REQUESTS:
             try:
-                sp_ack, address = the_socket.recvfrom(profile_downlink.MTU)
+                last_ack, address = the_socket.recvfrom(profile_downlink.MTU)
                 print("Last ACK received. End of transmission.")
+                the_socket.sendto("".encode(), address)
                 break
             except:
                 requests += 1
 
-    if sp_ack:
+    if last_ack:
         break
     else:
         i += 1
