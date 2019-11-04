@@ -54,9 +54,9 @@ while True:
 		print("FCNs \n Received: " + fragment_message.header.FCN + "\n Expected: " + fcn)
 
 		if fragment_message.is_all_0():
-			fragments.append(fragment)
-			current_size += len(fragment)
-			print("Received " + str(current_size) + " so far...")
+			# fragments.append(fragment)
+			# current_size += len(fragment)
+			# print("Received " + str(current_size) + " so far...")
 			print("Received All-0: Sending ACKs if they exist...")
 			for ack in ack_list:
 				the_socket.sendto(ack.to_string().encode(), address)
@@ -84,7 +84,9 @@ while True:
 the_socket.close()
 
 reassembler = Reassembler(profile_uplink, fragments)
-payload = reassembler.reassemble()
+payload = bytearray(reassembler.reassemble())
+
+print(payload)
 
 file = open("received.png", "wb")
 file.write(payload)

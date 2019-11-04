@@ -68,7 +68,7 @@ while i < len(fragment_list):
 	fragment = Fragment(profile_uplink, data)
 
 	if fragment.is_all_0():
-		the_socket.settimeout(1)  # profile_uplink.RETRANSMISSION_TIMER_VALUE
+		the_socket.settimeout(0)  # profile_uplink.RETRANSMISSION_TIMER_VALUE
 		while True:
 			try:
 				ack, address = the_socket.recvfrom(profile_downlink.MTU)
