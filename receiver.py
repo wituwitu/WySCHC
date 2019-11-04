@@ -15,6 +15,7 @@ def replace_bit(string, index, value):
 
 print("This is the RECEIVER script for a Sigfox Uplink transmission example")
 
+
 profile_uplink = Sigfox("UPLINK", "ACK ON ERROR")
 profile_downlink = Sigfox("DOWNLINK", "NO ACK")
 
