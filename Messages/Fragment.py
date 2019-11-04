@@ -33,7 +33,15 @@ class Fragment:
         fcn = header[self.rule_id_size + self.t + self.window_size:self.rule_id_size + self.t + self.window_size + self.n]
         c = ""
 
-        self.header = Header(self.profile, rule_id, dtag, window, fcn, c)
+        print(rule_id)
+        print(dtag)
+        print(window)
+        print(fcn)
+        print(c)
+
+        self.header = Header(self.profile, rule_id.decode(), dtag.decode(), window.decode(), fcn.decode(), c)
+
+        print(payload)
         self.payload = Payload(self.profile, payload)
 
     def is_all_1(self):

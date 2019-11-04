@@ -73,7 +73,7 @@ class Reassembler:
 		for fragment in fragments:
 			payload_list.append(fragment.payload.payload)
 
-		return "".join(payload_list)
+		return b"".join(payload_list)
 
 	# ABOUT PADDING BITS:
 	# The "Static Context Header Compression (SCHC) and fragmentation for LPWAN, application to UDP/IPv6" draft says:

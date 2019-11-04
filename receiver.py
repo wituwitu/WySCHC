@@ -43,9 +43,13 @@ while True:
 	fragment, address = the_socket.recvfrom(profile_uplink.MTU)
 
 	if fragment:
-		if fragment.decode() == "":
-			break
-		fragment_message = Fragment(profile_uplink, fragment.decode())
+		try:
+			if fragment.decode() == "":
+				break
+		except UnicodeDecodeError:
+			print("This is not the final fragment.")
+
+		fragment_message = Fragment(profile_uplink, fragment)
 
 		print("FCNs \n Received: " + fragment_message.header.FCN + "\n Expected: " + fcn)
 
@@ -82,6 +86,6 @@ the_socket.close()
 reassembler = Reassembler(profile_uplink, fragments)
 payload = reassembler.reassemble()
 
-file = open("received.txt", "wb")
+file = open("received.png", "wb")
 file.write(payload)
 file.close()

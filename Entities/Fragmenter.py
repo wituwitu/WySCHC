@@ -59,8 +59,8 @@ class Fragmenter:
 			else:
 				header = Header(self.profile, rule_id="RR", dtag="D", w=w, fcn=fcn, c=0)
 
-			fragment = header.string + fragment_payload
-			print("[" + header.string + "]" + fragment_payload)
+			fragment = [header.string, fragment_payload]
+			print("[" + header.string + "]" + str(fragment_payload))
 			fragment_list.append(fragment)
 
 		print("Fragmentation complete.")
