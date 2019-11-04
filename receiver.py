@@ -79,7 +79,7 @@ while True:
 
 			if '0' in bitmap:
 				print("Bitmap: " + bitmap)
-				ack = ACK(profile_uplink, rule_id, dtag, w, bitmap, 0)
+				ack = ACK(profile_uplink, rule_id, dtag, w, bitmap, '0')
 
 				print("Waiting for lost fragments...")
 
@@ -124,7 +124,7 @@ while True:
 
 		elif fragment_message.header.FCN != fcn:
 			print("Wrong fragment received. Adding to bitmap...")
-			replace_bit(bitmap, profile_uplink.WINDOW_SIZE - (i % profile_uplink.BITMAP_SIZE), 0)
+			bitmap = replace_bit(bitmap, (profile_uplink.BITMAP_SIZE - 1) - (i % profile_uplink.BITMAP_SIZE), 0)
 			print(bitmap)
 
 		else:
