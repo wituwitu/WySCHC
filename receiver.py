@@ -96,7 +96,7 @@ while True:
 			for k in range(profile_uplink.BITMAP_SIZE):
 				bitmap += '1'
 
-		if fragment_message.is_all_1():
+		elif fragment_message.is_all_1():
 
 			rule_id = fragment_message.header.RULE_ID
 			dtag = fragment_message.header.DTAG
@@ -121,9 +121,10 @@ while True:
 
 			break
 
-		if fragment_message.header.FCN != fcn:
+		elif fragment_message.header.FCN != fcn:
 			print("Wrong fragment received. Adding to bitmap...")
 			replace_bit(bitmap, profile_uplink.WINDOW_SIZE - (i % profile_uplink.BITMAP_SIZE), 0)
+			print(bitmap)
 
 		else:
 			fragments.append(fragment)
