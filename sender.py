@@ -26,9 +26,13 @@ filename = sys.argv[3]
 
 address = (ip, port)
 
-data = open(filename, "rb")
-payload = data.read().decode()
-data.close()
+# data = open(filename, "rb")
+# payload = data.read().decode()
+# data.close()
+
+with open(filename, "rb") as data:
+    f = data.read()
+    payload = bytearray(f)
 
 print(payload)
 total_size = len(payload)
@@ -62,7 +66,7 @@ while i < len(fragment_list):
     fragment = Fragment(profile_uplink, data)
 
     if fragment.is_all_0():
-        the_socket.settimeout(profile_uplink.RETRANSMISSION_TIMER_VALUE)
+        the_socket.settimeout(1) # profile_uplink.RETRANSMISSION_TIMER_VALUE
         while True:
             try:
                 ack, address = the_socket.recvfrom(profile_downlink.MTU)
