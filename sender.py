@@ -68,7 +68,7 @@ while i < len(fragment_list):
 	fragment = Fragment(profile_uplink, data)
 
 	if fragment.is_all_0():
-		the_socket.settimeout(0)  # profile_uplink.RETRANSMISSION_TIMER_VALUE
+		the_socket.settimeout(1)  # profile_uplink.RETRANSMISSION_TIMER_VALUE
 		while True:
 			try:
 				ack, address = the_socket.recvfrom(profile_downlink.MTU)
@@ -89,9 +89,12 @@ while i < len(fragment_list):
 			the_socket.settimeout(profile_uplink.RETRANSMISSION_TIMER_VALUE)
 			try:
 				last_ack, address = the_socket.recvfrom(profile_downlink.MTU)
-				print("Last ACK received. End of transmission.")
-				the_socket.sendto("".encode(), address)
-				break
+				if last_ack[profile_uplink.RULE_ID_SIZE + profile_uplink.T + 2*profile_uplink.WINDOW_SIZE] == 1:
+					print("Last ACK received. End of transmission.")
+					the_socket.sendto("".encode(), address)
+					break
+				else:
+					continue
 			except:
 				requests += 1
 				print("Trying for " + str(requests) + "th time")

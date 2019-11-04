@@ -1,25 +1,32 @@
-from Messages.Header import Header
-
-
 class ACK:
 
     profile = None
+    rule_id = None
+    dtag = None
+    w = None
+    bitmap = None
+    c = None
     header = None
-    payload = ""
+    padding = None
 
-    def __init__(self, profile, message):
+    def __init__(self, profile, rule_id, dtag, w, bitmap, c):
         self.profile = profile
         # self.header = Header(profile, message.header.RULE_ID, message.header.DTAG.zfill(2), message.header.W[-1],
         # fcn="", c="0")		# [-1]: the least significant bit
-        self.header = Header(profile, message.header.RULE_ID, message.header.DTAG, message.header.W, fcn=message.header.FCN)
-        # print("C: " + self.header.C)
-        self.header.test()
+
+        self.rule_id = rule_id
+        self.dtag = dtag
+        self.w = w
+        self.bitmap = bitmap
+        self.c = c
+
+        self.header = self.rule_id + self.dtag + self.w + self.bitmap + self.c
 
         print("Applying padding for ACK...")
-        while len(self.header.string + self.payload) < profile.MTU:
-            self.payload += "X"
+        while len(self.header + self.padding) < profile.MTU:
+            self.padding += "X"
 
-        print("ACK is now " + str(len(self.header.string + self.payload)) + " bits long")
+        print("ACK is now " + str(len(self.header.string + self.padding)) + " bits long")
 
     def to_string(self):
-        return self.header.string + self.payload
+        return self.header + self.padding
