@@ -48,6 +48,7 @@ class Sigfox(Protocol):
                 self.T = 1
                 self.N = 3
                 self.WINDOW_SIZE = 2  # recommended to be single
+                self.BITMAP_SIZE = 2 ** self.N - 1  # from excel
                 self.MAX_ACK_REQUESTS = 3  # SHOULD be 2
                 self.MAX_WIND_FCN = 6  # SHOULD be
 
@@ -83,6 +84,7 @@ class Sigfox(Protocol):
         print("T = " + str(self.T))
         print("N = " + str(self.N))
         print("WINDOW_SIZE = " + str(self.WINDOW_SIZE))
+        print("BITMAP_SIZE = " + str(self.BITMAP_SIZE))
         print("MAX_ACK_REQUESTS = " + str(self.MAX_ACK_REQUESTS))
         print("MAX_WIND_FCN = " + str(self.MAX_WIND_FCN))
         print("")

@@ -6,8 +6,8 @@ class ACK:
     w = None
     bitmap = None
     c = None
-    header = None
-    padding = None
+    header = ''
+    padding = ''
 
     def __init__(self, profile, rule_id, dtag, w, bitmap, c):
         self.profile = profile
@@ -26,7 +26,7 @@ class ACK:
         while len(self.header + self.padding) < profile.MTU:
             self.padding += "X"
 
-        print("ACK is now " + str(len(self.header.string + self.padding)) + " bits long")
+        print("ACK is now " + str(len(self.header + self.padding)) + " bits long")
 
     def to_string(self):
         return self.header + self.padding

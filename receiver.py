@@ -9,8 +9,8 @@ from Messages.ACK import ACK
 from Messages.Fragment import Fragment
 
 
-def replace_bit(bitmap, index, value):
-	return '%s%s%s' % (bitmap[:index], value, bitmap[index + 1:])
+def replace_bit(string, index, value):
+	return '%s%s%s' % (string[:index], value, string[index + 1:])
 
 
 print("This is the RECEIVER script for a Sigfox Uplink transmission example")
@@ -39,24 +39,26 @@ fragments = []
 ack_list = []
 bitmap = ''
 
-for i in range(profile_uplink.WINDOW_SIZE):
+for l in range(profile_uplink.BITMAP_SIZE):
 	bitmap += '1'
 
 i = 0
+payload = ''
 
 while True:
+	print(i)
 	fcn = bin((2 ** n - 2) - (i % (2 ** n - 1)))[2:].zfill(3)
 
 	the_socket.settimeout(profile_uplink.INACTIVITY_TIMER_VALUE)
 
-	fragment, address = the_socket.recvfrom(profile_uplink.MTU)
+	fragment, address = the_socket.recvfrom(buffer_size)
 
 	if fragment:
 		try:
 			if fragment.decode() == "":
 				break
 		except UnicodeDecodeError:
-			print("This is not the final fragment.")
+			pass
 
 		fragment_message = Fragment(profile_uplink, fragment)
 
@@ -71,12 +73,27 @@ while True:
 			current_size += len(fragment)
 			print("Received " + str(current_size) + " so far...")
 			print("Received All-0: Sending ACK if it exists...")
-			if all(char == bitmap[0] for char in bitmap):
+
+			print(bitmap)
+
+			if '0' in bitmap:
+				print("Bitmap: " + bitmap)
 				ack = ACK(profile_uplink, rule_id, dtag, w, bitmap, 0)
+
+				print("Waiting for lost fragments...")
+
+				number_of_lost_fragments = bitmap.count('0')
+
+				for j in range(number_of_lost_fragments):
+					fragment, address = the_socket.recvfrom(buffer_size)
+					fragment_message = Fragment(profile_uplink, fragment)
+					fragments.append(fragment)
+					current_size += len(fragment)
+					print("Received " + str(current_size) + " so far...")
 
 			# reinitialize bitmap for next window
 			bitmap = ''
-			for i in range(profile_uplink.WINDOW_SIZE):
+			for k in range(profile_uplink.BITMAP_SIZE):
 				bitmap += '1'
 
 		if fragment_message.is_all_1():
@@ -93,35 +110,33 @@ while True:
 
 			reassembler = Reassembler(profile_uplink, fragments)
 
-			try:
-				payload = bytearray(reassembler.reassemble())
+			# try:
+			payload = bytearray(reassembler.reassemble())
+			print("Reassembled: Sending last ACK")
+			last_ack = ACK(profile_uplink, rule_id, dtag, w, bitmap, '1')
+			the_socket.sendto(last_ack.to_string().encode(), address)
 
-				print("Reassembled: Sending last ACK")
-				last_ack = ACK(profile_uplink, rule_id, dtag, w, bitmap, 1)
-				the_socket.sendto(last_ack.to_string().encode(), address)
-
-			except:
-				print("Could not reassemble ):")
+			# except:
+			# 	print("Could not reassemble ):")
 
 			break
 
 		if fragment_message.header.FCN != fcn:
 			print("Wrong fragment received. Adding to bitmap...")
-			replace_bit(bitmap, i%profile_uplink.WINDOW_SIZE, 0)
+			replace_bit(bitmap, profile_uplink.WINDOW_SIZE - (i % profile_uplink.BITMAP_SIZE), 0)
 
 		else:
 			fragments.append(fragment)
 			current_size += len(fragment)
 			print("Received " + str(current_size) + " so far...")
 
+	print(str(i) + "\n")
 	i += 1
 
 the_socket.close()
 
+# print(payload)
 
-
-print(payload)
-
-file = open("received.txt", "wb")
+file = open("received.png", "wb")
 file.write(payload)
 file.close()

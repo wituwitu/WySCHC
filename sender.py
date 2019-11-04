@@ -43,7 +43,7 @@ percent = round(0, 2)
 fragmenter = Fragmenter(profile_uplink, payload)
 fragment_list = fragmenter.fragment()
 
-ack_list = []
+ack = None
 last_ack = None
 i = 0
 
@@ -69,13 +69,21 @@ while i < len(fragment_list):
 
 	if fragment.is_all_0():
 		the_socket.settimeout(1)  # profile_uplink.RETRANSMISSION_TIMER_VALUE
-		while True:
-			try:
-				ack, address = the_socket.recvfrom(profile_downlink.MTU)
-				ack_list.append(ack.decode())
+		try:
+			ack, address = the_socket.recvfrom(profile_downlink.MTU)
+			index = profile_uplink.RULE_ID_SIZE + profile_uplink.T + profile_uplink.WINDOW_SIZE
+			bitmap = ack.decode()[index:index + profile_uplink.WINDOW_SIZE]
 
-			except:
-				break
+			unsent_fragments = []
+
+			for j in range(len(bitmap)):
+				if bitmap[j] == '0':
+					data = bytearray(fragment_list[i-j][0].encode()) + fragment_list[i-j][1]
+					print(data)
+					the_socket.sendto(data, address)
+
+		except:
+			print("No ACK received.")
 
 	# En este caso, se tiene la opción de enviar al final un SCHC ACK REQ para verificar que los
 	# fragmentos retransmitidos han sido recibidos correctamente, o no. Esto es algo que aún no me queda
@@ -89,28 +97,27 @@ while i < len(fragment_list):
 			the_socket.settimeout(profile_uplink.RETRANSMISSION_TIMER_VALUE)
 			try:
 				last_ack, address = the_socket.recvfrom(profile_downlink.MTU)
-				if last_ack[profile_uplink.RULE_ID_SIZE + profile_uplink.T + 2*profile_uplink.WINDOW_SIZE] == 1:
-					print("Last ACK received. End of transmission.")
-					the_socket.sendto("".encode(), address)
-					break
-				else:
-					continue
+				index = profile_uplink.RULE_ID_SIZE + profile_uplink.T + 2*profile_uplink.WINDOW_SIZE
+				c = last_ack.decode()[index]
+				print("Last ACK received with C = " + c + ". End of transmission.")
+				the_socket.sendto("".encode(), address)
+				break
 			except:
 				requests += 1
 				print("Trying for " + str(requests) + "th time")
 			if requests > profile_uplink.MAX_ACK_REQUESTS:
 				print("MAX_ACK_REQUESTS reached. Wat do?")
 
-	for ack in ack_list:  # para cada ACK recibido
-		fcn = ACK(profile_downlink, ack).header.FCN
-		# obtengo su FCN # OJO AQUI: ACK crea un ACK para el ACK, no lo reinstaura.
-		# Pero los headers son iwales así que igual apaña
-		for fragment in fragment_list:
-			if fcn == Fragment(profile_uplink, fragment).header.FCN:
-				the_socket.sendto(fragment.encode(), address)
-				# reenvío todos los fragmentos cuyos FCN aparezcan en ACKs
-			else:
-				print("Received ACK but no corresponding fragment found D:")
+	# for ack in ack_list:  # para cada ACK recibido
+	# 	fcn = ACK(profile_downlink, ack).header.FCN
+	# 	# obtengo su FCN # OJO AQUI: ACK crea un ACK para el ACK, no lo reinstaura.
+	# 	# Pero los headers son iwales así que igual apaña
+	# 	for fragment in fragment_list:
+	# 		if fcn == Fragment(profile_uplink, fragment).header.FCN:
+	# 			the_socket.sendto(fragment.encode(), address)
+	# 			# reenvío todos los fragmentos cuyos FCN aparezcan en ACKs
+	# 		else:
+	# 			print("Received ACK but no corresponding fragment found D:")
 
 	if last_ack:
 		break

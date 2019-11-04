@@ -71,7 +71,7 @@ class Reassembler:
 		# self.schc_fragments MUST HAVE BEEN ORDERED
 
 		for fragment in fragments:
-			payload_list.append(fragment.payload.payload)
+			payload_list.append(fragment.payload)
 
 		return b"".join(payload_list)
 
