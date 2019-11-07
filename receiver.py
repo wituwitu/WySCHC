@@ -2,6 +2,8 @@
 
 import socket
 import sys
+import os
+import glob
 
 from Entities.Reassembler import Reassembler
 from Entities.Sigfox import Sigfox
@@ -12,6 +14,9 @@ from Messages.Fragment import Fragment
 def replace_bit(string, index, value):
 	return '%s%s%s' % (string[:index], value, string[index + 1:])
 
+
+for filename in glob.glob("received*"):
+	os.remove(filename)
 
 print("This is the RECEIVER script for a Sigfox Uplink transmission example")
 
