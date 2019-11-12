@@ -4,6 +4,8 @@ import socket
 import sys
 import os
 import glob
+import requests
+import json
 
 from Entities.Reassembler import Reassembler
 from Entities.Sigfox import Sigfox
@@ -13,6 +15,24 @@ from Messages.Fragment import Fragment
 
 def replace_bit(string, index, value):
 	return '%s%s%s' % (string[:index], value, string[index + 1:])
+
+
+def get_fragments(device_id, auth, limit):
+	url = "https://api.sigfox.com/v2/devices/{}/messages".format(device_id)
+	payload = ''
+	headers = {
+		"Accept": "application/json",
+		"Content-Type": "application/x-www-form-urlencoded",
+		"Authorization": auth,
+		"cache-control": "no-cache"
+	}
+	params = {"limit": limit}
+	response = requests.request("GET", url, data=payload, headers=headers, params=params)
+	parsed = response.json()
+	byte_array = []
+	values = parsed["data"]
+	for val in values:
+		byte_array.append(bytearray.fromhex(val["data"]))
 
 
 for filename in glob.glob("received*"):
