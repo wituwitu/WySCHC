@@ -13,7 +13,6 @@ from Messages.Fragment import Fragment
 print("This is the SENDER script for a Sigfox Uplink transmission example")
 
 profile_uplink = Sigfox("UPLINK", "ACK ON ERROR")
-profile_downlink = Sigfox("DOWNLINK", "NO ACK")
 
 the_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -35,6 +34,8 @@ with open(filename, "rb") as data:
 	f = data.read()
 	payload = bytearray(f)
 
+print(f)
+
 print(payload)
 total_size = len(payload)
 current_size = 0
@@ -55,8 +56,14 @@ while i < len(fragment_list):
 	#     the_socket.sendto("".encode(), address)
 	#     break
 
-	data = bytearray(fragment_list[i][0].encode()) + fragment_list[i][1]
-	print(data)
+	data = bytes(fragment_list[i][0] + fragment_list[i][1])
+
+
+	print(profile_uplink.MTU)
+	print(len(data)*8)
+	print(len(bytes(fragment_list[i][0])))
+	print(len(bytes(fragment_list[i][1])))
+
 	the_socket.sendto(data, address)
 
 	current_size += len(data)
@@ -65,7 +72,9 @@ while i < len(fragment_list):
 	print("Sending...")
 	print(str(current_size) + " / " + str(total_size) + ", " + str(percent) + "%")
 
-	fragment = Fragment(profile_uplink, data)
+	print("converting to fragment")
+
+	fragment = Fragment(profile_uplink, fragment_list[i])
 
 	if fragment.is_all_0():
 		the_socket.settimeout(1)  # profile_uplink.RETRANSMISSION_TIMER_VALUE

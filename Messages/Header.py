@@ -17,6 +17,7 @@ class Header:
     COMPRESSED_BITMAP = ""
 
     string = ""
+    bytes = None
 
     def __init__(self, profile, rule_id, dtag, w, fcn, c=""):  # rule_id is arbitrary, as it's not applicable for F/R
 
@@ -52,6 +53,7 @@ class Header:
                 self.FCN = fcn
 
         self.string = "".join([self.RULE_ID, self.DTAG, self.W, self.FCN, self.C])  # self.C ?
+        self.bytes = bytes(int(self.string[i:i + 8], 2) for i in range(0, len(self.string), 8))
 
     def test(self):
 

@@ -17,12 +17,11 @@ from Entities.Fragmenter import Fragmenter
 profile = Sigfox("UPLINK", "ACK ON ERROR")
 MTU = profile.MTU
 
+with open("pollito_14x14.png", "rb") as data:
+	f = data.read()
+	payload = bytearray(f)
 
-data = open("example.txt", "rb")
-payload = data.read().decode()
-data.close()
-
-print("The payload to be transmitted is: " + payload)
+print("The payload to be transmitted is: " + str(payload))
 
 test_header = Header(profile, rule_id="RR", dtag="D", w="WW", fcn="000", c=0)
 test_header.test()
@@ -30,12 +29,14 @@ test_header.test()
 fragmenter = Fragmenter(profile, payload)
 fragment_list = fragmenter.fragment()
 
-# print("Fragments:")
-# for fragment in fragment_list:
-# 	print(fragment)
+print("Fragments:")
+for fragment in fragment_list:
+	print(fragment)
 
 if Fragment(profile, fragment_list[-1]).is_all_1() is True:
 	print("All-1 condition satisfied")
+else:
+	print("All-1 condition NOT satisfied")
 
 
 

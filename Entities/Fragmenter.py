@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from math import ceil, floor
-
 from Messages.Header import Header
 
 
@@ -14,7 +13,7 @@ class Fragmenter:
 		self.schc_packet = schc_packet
 
 	def fragment(self):
-		payload_max_length = self.profile.MTU - self.profile.HEADER_LENGTH  # self.profile.MTU - header_length
+		payload_max_length = int((self.profile.MTU - self.profile.HEADER_LENGTH) / 8)  # self.profile.MTU - header_length
 		message = self.schc_packet
 		fragment_list = []
 		n = self.profile.N
@@ -34,12 +33,11 @@ class Fragmenter:
 			w = bin(int(floor((i/(2**n - 1) % (2 ** window_size)))))[2:].zfill(2)
 			fcn = bin((2 ** n - 2) - (i % (2 ** n - 1)))[2:].zfill(3)
 
-			fragment_payload = message[i * payload_max_length:(i + 1) * payload_max_length]
+			fragment_payload = message[i * payload_max_length:(i + 1) * payload_max_length]		# Esto no debería tener problemas ya que es un arreglo de bytes
 
 			if len(fragment_payload) < payload_max_length:
-				header = Header(self.profile, rule_id="RR", dtag="D", w=w, fcn="111", c=0)
+				header = Header(self.profile, rule_id="00", dtag="0", w=w, fcn="111", c=0)
 				print("Final fragment")
-
 
 			# Con Sigfox se debe simplificar la implementación, ya que solo hay un tile por fragmento. También,
 			# en nuestro caso consideramos que en el UL no es necesario añadir padding bits, ya que el payload puede
@@ -57,10 +55,10 @@ class Fragmenter:
 					# hence save battery consumption at the device.
 
 			else:
-				header = Header(self.profile, rule_id="RR", dtag="D", w=w, fcn=fcn, c=0)
+				header = Header(self.profile, rule_id="00", dtag="0", w=w, fcn=fcn, c=0)
 
-			fragment = [header.string, fragment_payload]
-			print("[" + header.string + "]" + str(fragment_payload))
+			fragment = [header.bytes, fragment_payload]
+			# print("[" + header.string + "]" + str(fragment_payload))
 			fragment_list.append(fragment)
 
 		print("Fragmentation complete.")

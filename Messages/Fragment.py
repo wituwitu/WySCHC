@@ -24,22 +24,27 @@ class Fragment:
         self.n = profile.N
         self.window_size = profile.WINDOW_SIZE
 
-        header = fragment[:self.header_length]
-        payload = fragment[self.header_length:]
+        print(fragment)
 
-        rule_id = header[:self.rule_id_size]
-        dtag = header[self.rule_id_size:self.rule_id_size + self.t]
-        window = header[self.rule_id_size + self.t:self.rule_id_size + self.t + self.window_size]
-        fcn = header[self.rule_id_size + self.t + self.window_size:self.rule_id_size + self.t + self.window_size + self.n]
+        header = str(bin(int.from_bytes(fragment[0], 'little')))[2:].zfill(self.header_length)
+        payload = fragment[1]
+
+        print("Header " + str(header))
+        print("Payload " + str(payload))
+
+        rule_id = str(header[:self.rule_id_size])
+        dtag = str(header[self.rule_id_size:self.rule_id_size + self.t])
+        window = str(header[self.rule_id_size + self.t:self.rule_id_size + self.t + self.window_size])
+        fcn = str(header[self.rule_id_size + self.t + self.window_size:self.rule_id_size + self.t + self.window_size + self.n])
         c = ""
 
-        # print(rule_id)
-        # print(dtag)
-        # print(window)
-        # print(fcn)
-        # print(c)
+        print(rule_id)
+        print(dtag)
+        print(window)
+        print(fcn)
+        print(c)
 
-        self.header = Header(self.profile, rule_id.decode(), dtag.decode(), window.decode(), fcn.decode(), c)
+        self.header = Header(self.profile, rule_id, dtag, window, fcn, c)
 
         # print(payload)
         self.payload = payload
