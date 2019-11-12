@@ -13,6 +13,7 @@ from Messages.Fragment import Fragment
 print("This is the SENDER script for a Sigfox Uplink transmission example")
 
 profile_uplink = Sigfox("UPLINK", "ACK ON ERROR")
+profile_downlink = Sigfox("DOWNLINK", "NO ACK")
 
 the_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 

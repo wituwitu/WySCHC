@@ -20,7 +20,6 @@ for filename in glob.glob("received*"):
 
 print("This is the RECEIVER script for a Sigfox Uplink transmission example")
 
-
 profile_uplink = Sigfox("UPLINK", "ACK ON ERROR")
 profile_downlink = Sigfox("DOWNLINK", "NO ACK")
 
@@ -59,6 +58,10 @@ while True:
 
 	fragment, address = the_socket.recvfrom(buffer_size)
 
+	data = [bytes([fragment[0]]), bytearray(fragment[1:])]
+
+	print(data)
+
 	if fragment:
 		try:
 			if fragment.decode() == "":
@@ -66,7 +69,7 @@ while True:
 		except UnicodeDecodeError:
 			pass
 
-		fragment_message = Fragment(profile_uplink, fragment)
+		fragment_message = Fragment(profile_uplink, data)
 
 		print("FCNs \n Received: " + fragment_message.header.FCN + "\n Expected: " + fcn)
 
@@ -75,7 +78,7 @@ while True:
 			dtag = fragment_message.header.DTAG
 			w = fragment_message.header.W
 
-			fragments.append(fragment)
+			fragments.append(data)
 			current_size += len(fragment)
 			print("Received " + str(current_size) + " so far...")
 			print("Received All-0: Sending ACK if it exists...")
@@ -93,7 +96,7 @@ while True:
 				for j in range(number_of_lost_fragments):
 					fragment, address = the_socket.recvfrom(buffer_size)
 					fragment_message = Fragment(profile_uplink, fragment)
-					fragments.append(fragment)
+					fragments.append(data)
 					current_size += len(fragment)
 					print("Received " + str(current_size) + " so far...")
 
@@ -108,7 +111,7 @@ while True:
 			dtag = fragment_message.header.DTAG
 			w = fragment_message.header.W
 
-			fragments.append(fragment)
+			fragments.append(data)
 			current_size += len(fragment)
 			print("Received " + str(current_size) + " so far...")
 
@@ -133,7 +136,7 @@ while True:
 			print(bitmap)
 
 		else:
-			fragments.append(fragment)
+			fragments.append(data)
 			current_size += len(fragment)
 			print("Received " + str(current_size) + " so far...")
 
