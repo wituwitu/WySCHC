@@ -59,11 +59,10 @@ while i < len(fragment_list):
 
 	data = bytes(fragment_list[i][0] + fragment_list[i][1])
 
-
-	print(profile_uplink.MTU)
-	print(len(data)*8)
-	print(len(bytes(fragment_list[i][0])))
-	print(len(bytes(fragment_list[i][1])))
+	# print(profile_uplink.MTU)
+	# print(len(data)*8)
+	# print(len(bytes(fragment_list[i][0])))
+	# print(len(bytes(fragment_list[i][1])))
 
 	the_socket.sendto(data, address)
 
@@ -73,7 +72,7 @@ while i < len(fragment_list):
 	print("Sending...")
 	print(str(current_size) + " / " + str(total_size) + ", " + str(percent) + "%")
 
-	print("converting to fragment")
+	# print("converting to fragment")
 
 	fragment = Fragment(profile_uplink, fragment_list[i])
 

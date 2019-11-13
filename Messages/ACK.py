@@ -7,7 +7,7 @@ class ACK:
     bitmap = None
     c = None
     header = ''
-    padding = ''
+    padding = bytes(0)
 
     def __init__(self, profile, rule_id, dtag, w, bitmap, c):
         self.profile = profile
@@ -20,13 +20,19 @@ class ACK:
         self.bitmap = bitmap
         self.c = c
 
-        self.header = self.rule_id + self.dtag + self.w + self.bitmap + self.c
+        self.header = bytearray((self.rule_id + self.dtag + self.w + self.bitmap + self.c).encode())
 
-        print("Applying padding for ACK...")
+        # print("Applying padding for ACK...")
+        # print(profile.MTU)
+
         while len(self.header + self.padding) < profile.MTU:
-            self.padding += "X"
+            # print(len(self.header + self.padding))
+            self.padding += bytes(1)
 
         print("ACK is now " + str(len(self.header + self.padding)) + " bits long")
 
     def to_string(self):
+        return self.header + self.padding
+
+    def to_bytes(self):
         return self.header + self.padding

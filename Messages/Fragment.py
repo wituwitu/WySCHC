@@ -24,13 +24,10 @@ class Fragment:
         self.n = profile.N
         self.window_size = profile.WINDOW_SIZE
 
-        print(fragment)
+        # print(fragment)
 
         header = str(bin(int.from_bytes(fragment[0], 'little')))[2:].zfill(self.header_length)
         payload = fragment[1]
-
-        print("Header " + str(header))
-        print("Payload " + str(payload))
 
         rule_id = str(header[:self.rule_id_size])
         dtag = str(header[self.rule_id_size:self.rule_id_size + self.t])
@@ -38,16 +35,20 @@ class Fragment:
         fcn = str(header[self.rule_id_size + self.t + self.window_size:self.rule_id_size + self.t + self.window_size + self.n])
         c = ""
 
-        print(rule_id)
-        print(dtag)
-        print(window)
-        print(fcn)
-        print(c)
+        # print(rule_id)
+        # print(dtag)
+        # print(window)
+        # print(fcn)
+        # print(c)
 
         self.header = Header(self.profile, rule_id, dtag, window, fcn, c)
 
         # print(payload)
         self.payload = payload
+
+    def test(self):
+        print("Header: " + self.header.string)
+        print("Payload: " + str(self.payload))
 
     def is_all_1(self):
         fcn = self.header.FCN
