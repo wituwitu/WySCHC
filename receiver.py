@@ -21,10 +21,6 @@ def find(string, character):
 	return [i for i, ltr in enumerate(string) if ltr == character]
 
 
-def get_index_from_fcn(fcn, n):
-	fcn = bin((2 ** n - 2) - (i % (2 ** n - 1)))[2:].zfill(3)
-
-
 def get_fragments(device_id, limit, auth="Basic NWRjNDY1ZjRlODMzZDk0MWY2Y2M0Y2QzOjBmMjQ1NDI0MTg2YTMxNDhjYzJkNWJiYjI0MDUwOWY5"):
 	url = "https://api.sigfox.com/v2/devices/{}/messages".format(device_id)
 	payload = ''
@@ -105,14 +101,7 @@ while True:
 
 	the_socket.settimeout(profile_uplink.INACTIVITY_TIMER_VALUE)
 
-	coin = random.random()
-
 	fragment, address = the_socket.recvfrom(buffer_size)
-
-	if coin * 100 < loss_rate:
-		print("[LOSS] The packet was lost.")
-		i += 1
-		continue
 
 	if fragment:
 		data = [bytes([fragment[0]]), bytearray(fragment[1:])]
@@ -126,6 +115,15 @@ while True:
 		fragment_message = Fragment(profile_uplink, data)
 
 		# print("Received FCN: " + fragment_message.header.FCN)
+
+		# This avoids All-0 and All-1 fragments being lost. A bit unreal, if you ask me...
+
+		if not fragment_message.is_all_0() and not fragment_message.is_all_1():
+			coin = random.random()
+			if coin * 100 < loss_rate:
+				print("[LOSS] The packet was lost.")
+				i += 1
+				continue
 
 		try:
 			fragment_number = fcn_dict[fragment_message.header.FCN]
@@ -153,104 +151,76 @@ while True:
 		# add the received fragment to the bitmap
 
 		current_size += len(fragment)
-		print("[RECV] Received " + str(current_size) + " so far...")
+		# print("[RECV] Received " + str(current_size) + " so far...")
 
-		if fragment_message.is_all_0():
+		if fragment_message.is_all_0() or fragment_message.is_all_1():
 
-			print("[RECV] Received All-0: Sending ACK if it exists...")
-			print("[RECV] Bitmap: " + bitmap)
+			print("[ALLX] Received All-X: Sending ACK if it exists...")
+			print("[ALLX] Bitmap: " + bitmap)
 
 			if '0' in bitmap:
-
-				print("[RECV] Waiting for lost fragments...")
 
 				number_of_lost_fragments = bitmap.count('0')
 				indices = find(bitmap, '0')
 
-				for j in range(number_of_lost_fragments):
+				print("[ALLX] Sending NACK for lost fragments...")
+				ack = ACK(profile_downlink, rule_id, dtag, w, bitmap, '0')
+				the_socket.sendto(ack.to_bytes(), address)
 
+				for j in range(number_of_lost_fragments):
 					index = indices[j]
 
-					print("[RECV] Sending NACK for " + str(index + 1) + "th fragment...")
-					ack = ACK(profile_downlink, rule_id, dtag, w, bitmap, '0')
-					the_socket.sendto(ack.to_bytes(), address)
-
-					print("[RECV] Recovering " + str(index + 1) + "th fragment...")
+					print("[ALLX] Recovering " + str(index) + "th fragment...")
 					fragment, address = the_socket.recvfrom(buffer_size)
-					data = [bytes([fragment[0]]), bytearray(fragment[1:])]
-					# fragment_message = Fragment(profile_uplink, data)
 
-					# replace empty fragment at index
-					# this does not check for FCN in the retransmitted packet.
+					data = [bytes([fragment[0]]), bytearray(fragment[1:])]
+
+					fragment_message = Fragment(profile_uplink, data)
+
+					fragment_number = fcn_dict[fragment_message.header.FCN]
+
+					print("[ALLX] This corresponds to the " + str(fragment_number) + "th fragment of the " + str(
+						current_window) + "th window.")
 
 					window[index] = data
 					current_size += len(fragment)
-					print("[RECV] Received " + str(current_size) + " so far...")
+
+					print("[ALLX] Recovered")
+			# print("[ALL0] Received " + str(current_size) + " so far...")
 
 			for m in range(2 ** n - 1):
 				fragments.append(window[m])
 
-			# print(fragments)
+			if fragment_message.is_all_0():
 
-			# proceed to next window
+				# reinitialize
+				current_window += 1
+				window = []
+				bitmap = ''
+				for k in range(profile_uplink.BITMAP_SIZE):
+					bitmap += '0'
 
-			current_window += 1
-			window = []
+			if fragment_message.is_all_1():
 
-			# reinitialize bitmap for next window
-			bitmap = ''
-			for k in range(profile_uplink.BITMAP_SIZE):
-				bitmap += '0'
+				#print(fragments)
 
-		elif fragment_message.is_all_1():
+				print("[ALL1] Last fragment. Reassembling...")
 
-			# fragments.append(data)
+				print("[ALL1] " + str(len(fragments)) + " fragments received.")
 
-			# Add the fragment to the array
+				reassembler = Reassembler(profile_uplink, fragments)
 
-			# fragments[current_window * n + fragment_number] = data
-			# current_size += len(fragment)
-			# print("Received " + str(current_size) + " so far...")
+				# try:
+				payload = bytearray(reassembler.reassemble())
+				print("[ALL1] Reassembled: Sending last ACK")
+				last_ack = ACK(profile_downlink, rule_id, dtag, w, bitmap, '1')
+				the_socket.sendto(last_ack.to_bytes(), address)
 
-			for m in range(2 ** n - 1):
-				fragments.append(window[m])
+				# except:
+				# 	print("Could not reassemble ):")
 
-			#vprint(fragments)
+				break
 
-			print("[RECV] Last fragment. Reassembling...")
-
-			print("[RECV] "+ str(len(fragments)) + " fragments received.")
-
-			reassembler = Reassembler(profile_uplink, fragments)
-
-			# try:
-			payload = bytearray(reassembler.reassemble())
-			print("[RECV] Reassembled: Sending last ACK")
-			last_ack = ACK(profile_downlink, rule_id, dtag, w, bitmap, '1')
-			the_socket.sendto(last_ack.to_bytes(), address)
-
-			# except:
-			# 	print("Could not reassemble ):")
-
-			break
-
-		# elif fragment_message.header.FCN != fcn:
-		# 	print("Wrong fragment received. Adding to bitmap...")
-		# 	bitmap = replace_bit(bitmap, (profile_uplink.BITMAP_SIZE - 1) - (i % profile_uplink.BITMAP_SIZE), 0)
-		# 	print(bitmap)
-		# 	print("Generating empty fragment")
-		# 	empty = [bytes("0"), bytearray("0")]
-		# 	fragments.append(empty)
-
-		# else:
-		# 	# Add the fragment to the array
-		#
-		# 	fragments[current_window * n + fragment_number] = data
-		#
-		# 	current_size += len(fragment)
-		# 	print("Received " + str(current_size) + " so far...")
-
-	# print(str(i) + "\n")
 	i += 1
 
 the_socket.close()

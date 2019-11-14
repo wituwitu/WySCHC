@@ -25,10 +25,10 @@ class Fragmenter:
 
 		number_of_fragments = int(ceil(float(len(message)) / payload_max_length))
 
-		print("Fragmenting message into " + str(number_of_fragments) + " pieces...")
+		print("[FRGM] Fragmenting message into " + str(number_of_fragments) + " pieces...")
 
 		for i in range(number_of_fragments):
-			print("Fragment number " + str(i))
+			# print("Fragment number " + str(i))
 
 			w = bin(int(floor((i/(2**n - 1) % (2 ** window_size)))))[2:].zfill(2)
 			fcn = bin((2 ** n - 2) - (i % (2 ** n - 1)))[2:].zfill(3)
@@ -37,7 +37,7 @@ class Fragmenter:
 
 			if len(fragment_payload) < payload_max_length:
 				header = Header(self.profile, rule_id="00", dtag="0", w=w, fcn="111", c=0)
-				print("Final fragment")
+				# print("Final fragment")
 
 			# Con Sigfox se debe simplificar la implementación, ya que solo hay un tile por fragmento. También,
 			# en nuestro caso consideramos que en el UL no es necesario añadir padding bits, ya que el payload puede
@@ -61,6 +61,6 @@ class Fragmenter:
 			# print("[" + header.string + "]" + str(fragment_payload))
 			fragment_list.append(fragment)
 
-		print("Fragmentation complete.")
+		print("[FRGM] Fragmentation complete.")
 
 		return fragment_list

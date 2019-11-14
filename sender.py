@@ -35,9 +35,9 @@ with open(filename, "rb") as data:
 	f = data.read()
 	payload = bytearray(f)
 
-print(f)
+# print(f)
 
-print(payload)
+# print(payload)
 total_size = len(payload)
 current_size = 0
 percent = round(0, 2)
@@ -48,6 +48,9 @@ fragment_list = fragmenter.fragment()
 ack = None
 last_ack = None
 i = 0
+
+current_window = 0
+# window = fragment_list[:profile_uplink.WINDOW_SIZE]
 
 while i < len(fragment_list):
 	# try:
@@ -82,19 +85,30 @@ while i < len(fragment_list):
 		the_socket.settimeout(1)  # profile_uplink.RETRANSMISSION_TIMER_VALUE
 		try:
 			ack, address = the_socket.recvfrom(profile_downlink.MTU)
+			print("Oh no! ACK received.")
+			print(ack.decode())
 			index = profile_uplink.RULE_ID_SIZE + profile_uplink.T + profile_uplink.WINDOW_SIZE
-			bitmap = ack.decode()[index:index + profile_uplink.WINDOW_SIZE]
+			bitmap = ack.decode()[index:index + profile_uplink.BITMAP_SIZE]
+			print(bitmap)
 
-			unsent_fragments = []
+			# unsent_fragments = []
 
 			for j in range(len(bitmap)):
 				if bitmap[j] == '0':
-					data = bytearray(fragment_list[i-j][0].encode()) + fragment_list[i-j][1]
+					print("The " + str(j) + "th (" + str((2 ** profile_uplink.N - 1)*current_window + j) + ") fragment was lost! Sending again...")
+
+					fragment_to_be_resent = fragment_list[(2 ** profile_uplink.N - 1)*current_window + j]
+
+					data = bytes(fragment_to_be_resent[0] + fragment_to_be_resent[1])
 					print(data)
 					the_socket.sendto(data, address)
 
-		except:
+			print("Proceeding to next window")
+			current_window += 1
+		except socket.timeout:
 			print("No ACK received.")
+			print("Proceeding to next window")
+			current_window += 1
 
 	# En este caso, se tiene la opción de enviar al final un SCHC ACK REQ para verificar que los
 	# fragmentos retransmitidos han sido recibidos correctamente, o no. Esto es algo que aún no me queda
