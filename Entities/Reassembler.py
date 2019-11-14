@@ -13,7 +13,8 @@ class Reassembler:
 		self.profile = profile
 
 		for fragment in schc_fragments:
-			self.schc_fragments.append(Fragment(self.profile, fragment))
+			if fragment != b'':
+				self.schc_fragments.append(Fragment(self.profile, fragment))
 
 		for fragment in self.schc_fragments:
 			self.rule_set.add(fragment.header.RULE_ID)
@@ -64,8 +65,6 @@ class Reassembler:
 		fragment_list = []
 		payload_list = []
 
-		# TODO: ORDER FRAGMENTS (commented)
-		# they recommended me to use an R-tree data structure but the name scares me a lot
 
 		# assuming all fragments are ordered properly, the only thing that's left is joining the payloads
 		# self.schc_fragments MUST HAVE BEEN ORDERED

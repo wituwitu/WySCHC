@@ -76,6 +76,8 @@ while i < len(fragment_list):
 
 	fragment = Fragment(profile_uplink, fragment_list[i])
 
+	print("Current window: " + str(fragment.header.W))
+
 	if fragment.is_all_0():
 		the_socket.settimeout(1)  # profile_uplink.RETRANSMISSION_TIMER_VALUE
 		try:
