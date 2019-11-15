@@ -46,6 +46,9 @@ while i < len(fragment_list):
 
 	# A fragment has the format "fragment = [header, payload]".
 	data = bytes(fragment_list[i][0] + fragment_list[i][1])
+
+	print(data)
+
 	current_size += len(fragment_list[i][1])
 	percent = round(float(current_size) / float(total_size) * 100, 2)
 
