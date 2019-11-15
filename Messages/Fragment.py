@@ -24,8 +24,6 @@ class Fragment:
         self.n = profile.N
         self.window_size = profile.WINDOW_SIZE
 
-        # print(fragment)
-
         header = str(bin(int.from_bytes(fragment[0], 'little')))[2:].zfill(self.header_length)
         payload = fragment[1]
 

@@ -7,6 +7,8 @@ import glob
 import requests
 import json
 
+from base64 import b64encode
+
 from Entities.Reassembler import Reassembler
 from Entities.Sigfox import Sigfox
 from Messages.ACK import ACK
@@ -21,14 +23,14 @@ def find(string, character):
 	return [i for i, ltr in enumerate(string) if ltr == character]
 
 
-def get_fragments(device_id, limit,
-				  auth="Basic NWRjNDY1ZjRlODMzZDk0MWY2Y2M0Y2QzOjBmMjQ1NDI0MTg2YTMxNDhjYzJkNWJiYjI0MDUwOWY5"):
+def get_fragments(device_id, limit, username, password):
 	url = "https://api.sigfox.com/v2/devices/{}/messages".format(device_id)
 	payload = ''
+	auth = b64encode(("%s:%s" % (username, password)).encode()).decode("ascii")
 	headers = {
 		"Accept": "application/json",
 		"Content-Type": "application/x-www-form-urlencoded",
-		"Authorization": auth,
+		"Authorization": "Basic %s" % auth,
 		"cache-control": "no-cache"
 	}
 	params = {"limit": limit}
@@ -42,18 +44,20 @@ def get_fragments(device_id, limit,
 	return byte_array
 
 
-# Delete the previously received file (only on offline testing)
+# Delete the previously received file (only for offline testing)
 for filename in glob.glob("received*"):
 	os.remove(filename)
 
 print("This is the RECEIVER script for a Sigfox Uplink transmission example")
 
-if len(sys.argv) != 3:
-	print("python receiver.py [DEVICE ID] [LIMIT]")
+if len(sys.argv) != 5:
+	print("python receiver.py [DEVICE ID] [LIMIT] [USER] [PASS]")
 	sys.exit()
 
 device_id = sys.argv[1]
 limit = sys.argv[2]
+username = sys.argv[3]
+password = sys.argv[4]
 
 # Initialize variables.
 profile_uplink = Sigfox("UPLINK", "ACK ON ERROR")
@@ -76,7 +80,8 @@ for j in range(2 ** n - 1):
 
 # Get fragments from backend
 
-backend_fragments = get_fragments(device_id, limit)
+backend_fragments = get_fragments(device_id, limit, username, password)
+print("Fetched fragments:")
 print(backend_fragments)
 
 for i in range(len(backend_fragments)):
@@ -128,7 +133,6 @@ for i in range(len(backend_fragments)):
 
 			# If the last received fragment is an All-1, start reassembling.
 			if fragment_message.is_all_1():
-
 				# If everything has gone according to plan, there shouldn't be any empty spaces
 				# between two received fragments. So the first occurrence of an empty space should be the position
 				# of the final fragment.
@@ -146,8 +150,7 @@ for i in range(len(backend_fragments)):
 				# End loop
 				break
 
-
 # Close the socket and write the received file.
-file = open("received.txt", "wb")
+file = open("received", "wb")
 file.write(payload)
 file.close()

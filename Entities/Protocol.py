@@ -1,5 +1,5 @@
 class Protocol:
-	NAME = None 			# (string) Name of protocol
+	NAME = None
 	RULE_ID_SIZE = 0
 	L2_WORD_SIZE = 0
 	TILE_SIZE = 0

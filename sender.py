@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import getopt
 import socket
 import sys
 import time
@@ -11,9 +11,24 @@ from Messages.Fragment import Fragment
 
 print("This is the SENDER script for a Sigfox Uplink transmission example")
 
-if len(sys.argv) != 4:
-	print("python sender.py [IP] [PORT] [FILENAME]")
+if len(sys.argv) < 4:
+	print("python sender.py [IP] [PORT] [FILENAME] [-hv]")
 	sys.exit()
+
+verbose = False
+
+try:
+	opts, args = getopt.getopt(sys.argv[4:], "hv")
+	for opt, arg in opts:
+		if opt == '-h':
+			print("python sender.py [IP] [PORT] [FILENAME] [-hv]")
+			sys.exit()
+		elif opt == '-v':
+			verbose = True
+		else:
+			print("Unhandled")
+except getopt.GetoptError as err:
+	print(str(err))
 
 ip = sys.argv[1]
 port = int(sys.argv[2])
@@ -47,7 +62,9 @@ while i < len(fragment_list):
 	# A fragment has the format "fragment = [header, payload]".
 	data = bytes(fragment_list[i][0] + fragment_list[i][1])
 
-	print(data)
+	if verbose:
+		print(str(i) + "th fragment:")
+		print(data)
 
 	current_size += len(fragment_list[i][1])
 	percent = round(float(current_size) / float(total_size) * 100, 2)

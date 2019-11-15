@@ -13,7 +13,7 @@ class Fragmenter:
 		self.schc_packet = schc_packet
 
 	def fragment(self):
-		payload_max_length = int((self.profile.MTU - self.profile.HEADER_LENGTH) / 8)  # self.profile.MTU - header_length
+		payload_max_length = int((self.profile.MTU - self.profile.HEADER_LENGTH) / 8)
 		message = self.schc_packet
 		fragment_list = []
 		n = self.profile.N
@@ -23,12 +23,11 @@ class Fragmenter:
 		print("[FRGM] Fragmenting message into " + str(number_of_fragments) + " pieces...")
 
 		for i in range(number_of_fragments):
-			# print("Fragment number " + str(i))
 
 			w = bin(int(floor((i/(2**n - 1) % (2 ** window_size)))))[2:].zfill(2)
 			fcn = bin((2 ** n - 2) - (i % (2 ** n - 1)))[2:].zfill(3)
 
-			fragment_payload = message[i * payload_max_length:(i + 1) * payload_max_length]		# Esto no debería tener problemas ya que es un arreglo de bytes
+			fragment_payload = message[i * payload_max_length:(i + 1) * payload_max_length]
 
 			if len(fragment_payload) < payload_max_length:
 				header = Header(self.profile, rule_id="00", dtag="0", w=w, fcn="111", c=0)
