@@ -97,7 +97,7 @@ while i < len(fragment_list):
 		try:
 			ack = the_socket.recv(profile_downlink.MTU)
 			print("ACK received.")
-			index = profile_uplink.RULE_ID_SIZE + profile_uplink.T + profile_uplink.WINDOW_SIZE
+			index = profile_uplink.RULE_ID_SIZE + profile_uplink.T + profile_uplink.M
 			bitmap = ack.decode()[index:index + profile_uplink.BITMAP_SIZE]
 			index_c = index + profile_uplink.BITMAP_SIZE
 			c = ack.decode()[index_c]

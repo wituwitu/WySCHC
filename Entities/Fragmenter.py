@@ -17,14 +17,13 @@ class Fragmenter:
 		message = self.schc_packet
 		fragment_list = []
 		n = self.profile.N
-		window_size = self.profile.WINDOW_SIZE
+		m = self.profile.M
 		number_of_fragments = int(ceil(float(len(message)) / payload_max_length))
 
 		print("[FRGM] Fragmenting message into " + str(number_of_fragments) + " pieces...")
 
 		for i in range(number_of_fragments):
-
-			w = bin(int(floor((i/(2**n - 1) % (2 ** window_size)))))[2:].zfill(2)
+			w = bin(int(floor((i/(2**n - 1) % (2 ** m)))))[2:].zfill(2)
 			fcn = bin((2 ** n - 2) - (i % (2 ** n - 1)))[2:].zfill(3)
 
 			fragment_payload = message[i * payload_max_length:(i + 1) * payload_max_length]

@@ -64,7 +64,7 @@ profile_uplink = Sigfox("UPLINK", "ACK ON ERROR")
 profile_downlink = Sigfox("DOWNLINK", "NO ACK")
 buffer_size = profile_uplink.MTU
 n = profile_uplink.N
-w = profile_uplink.WINDOW_SIZE
+w = profile_uplink.M
 # the_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 # the_socket.bind((ip, port))
 current_window = 0

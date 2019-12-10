@@ -5,7 +5,7 @@ class Protocol:
 	TILE_SIZE = 0
 	M = 0
 	N = 0
-	WINDOW_SIZE = 0
+	M = 0
 	BITMAP_SIZE = 0
 	RCS_SIZE = 0
 	RCS_ALGORITHM = None

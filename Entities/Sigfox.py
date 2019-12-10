@@ -32,12 +32,12 @@ class Sigfox(Protocol):
         if direction == "UPLINK":
             self.MTU = 12 * 8
 
-            if mode == "NO ACK":
-                self.HEADER_LENGTH = 8
-                self.RULE_ID_SIZE = 2  # recommended
-                self.T = 2  # recommended
-                self.N = 4  # recommended
-                self.WINDOW_SIZE = 0
+            # if mode == "NO ACK":
+            #     self.HEADER_LENGTH = 8
+            #     self.RULE_ID_SIZE = 2  # recommended
+            #     self.T = 2  # recommended
+            #     self.N = 4  # recommended
+            #     self.M = 0
 
             if mode == "ACK ALWAYS":
                 pass  # TBD
@@ -47,7 +47,8 @@ class Sigfox(Protocol):
                 self.RULE_ID_SIZE = 2
                 self.T = 1
                 self.N = 3
-                self.WINDOW_SIZE = 2  # recommended to be single
+                self.M = 2  # recommended to be single
+                self.WINDOW_SIZE = 2 ** self.N - 1
                 self.BITMAP_SIZE = 2 ** self.N - 1  # from excel
                 self.MAX_ACK_REQUESTS = 3  # SHOULD be 2
                 self.MAX_WIND_FCN = 6  # SHOULD be
@@ -58,14 +59,14 @@ class Sigfox(Protocol):
                 self.HEADER_LENGTH = 8
                 self.RULE_ID_SIZE = 2
                 self.T = 1
-                self.WINDOW_SIZE = 2
+                self.M = 2
                 self.N = 3
             if mode == "ACK ALWAYS":
                 self.HEADER_LENGTH = 8
                 self.RULE_ID_SIZE = 2  # recommended
                 self.T = 2  # recommended
                 self.N = 3  # recommended
-                self.WINDOW_SIZE = 1  # MUST be present, recommended to be single
+                self.M = 1  # MUST be present, recommended to be single
                 self.MAX_ACK_REQUESTS = 3  # SHOULD be 2
                 self.MAX_WIND_FCN = 6  # SHOULD be
 

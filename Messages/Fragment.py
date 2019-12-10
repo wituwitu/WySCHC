@@ -22,15 +22,15 @@ class Fragment:
         self.rule_id_size = profile.RULE_ID_SIZE
         self.t = profile.T
         self.n = profile.N
-        self.window_size = profile.WINDOW_SIZE
+        self.m = profile.M
 
         header = str(bin(int.from_bytes(fragment[0], 'little')))[2:].zfill(self.header_length)
         payload = fragment[1]
 
         rule_id = str(header[:self.rule_id_size])
         dtag = str(header[self.rule_id_size:self.rule_id_size + self.t])
-        window = str(header[self.rule_id_size + self.t:self.rule_id_size + self.t + self.window_size])
-        fcn = str(header[self.rule_id_size + self.t + self.window_size:self.rule_id_size + self.t + self.window_size + self.n])
+        window = str(header[self.rule_id_size + self.t:self.rule_id_size + self.t + self.m])
+        fcn = str(header[self.rule_id_size + self.t + self.m:self.rule_id_size + self.t + self.m + self.n])
         c = ""
 
         # print(rule_id)

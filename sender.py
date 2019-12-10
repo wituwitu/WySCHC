@@ -56,6 +56,15 @@ the_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 fragmenter = Fragmenter(profile_uplink, payload)
 fragment_list = fragmenter.fragment()
 
+attempts = 0
+
+if len(fragment_list) > (2 ** profile_uplink.M) * profile_uplink.WINDOW_SIZE:
+	print(len(fragment_list))
+	print((2 ** profile_uplink.M) * profile_uplink.WINDOW_SIZE)
+	print("The SCHC packet cannot be fragmented in 2 ** M * WINDOW_SIZE fragments or less. A Rule ID and DTag value pair cannot be selected.")
+	print("Goodbye.")
+	exit(1)
+
 # Start sending fragments.
 while i < len(fragment_list):
 
@@ -87,7 +96,7 @@ while i < len(fragment_list):
 		try:
 			ack, address = the_socket.recvfrom(profile_downlink.MTU)
 			print("ACK received.")
-			index = profile_uplink.RULE_ID_SIZE + profile_uplink.T + profile_uplink.WINDOW_SIZE
+			index = profile_uplink.RULE_ID_SIZE + profile_uplink.T + profile_uplink.M
 			bitmap = ack.decode()[index:index + profile_uplink.BITMAP_SIZE]
 			index_c = index + profile_uplink.BITMAP_SIZE
 			c = ack.decode()[index_c]
@@ -166,7 +175,7 @@ while i < len(fragment_list):
 		# If no ACK was received, it's safe to assume that no fragments went lost... Or did they?
 		except socket.timeout:
 			# TODO: What happens when the ACK gets lost?
-			print("No ACK received. We'll assume that no fragments were lost :D")
+			print("No ACK received (RETRANSMISSION_TIMER_VALUE). We'll assume that no fragments were lost :D")
 
 			# Proceed to next window.
 			print("Proceeding to next window")

@@ -12,9 +12,7 @@ class Header:
     DTAG = ""
     W = ""
     FCN = ""
-    RCS = ""
     C = ""
-    COMPRESSED_BITMAP = ""
 
     string = ""
     bytes = None
@@ -41,8 +39,10 @@ class Header:
         else:
             self.DTAG = dtag
 
-        if len(w) != profile.WINDOW_SIZE:
-            print('W must be of length WINDOW_SIZE')
+        if len(w) != profile.M:
+            print(w)
+            print(profile.M)
+            print('W must be of length M')
         else:
             self.W = w
 
