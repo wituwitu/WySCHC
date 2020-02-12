@@ -168,6 +168,8 @@ while True:
 						print("[ALLX] Recovered")
 						bitmap = replace_bit(bitmap, fragment_number_recovered, '1')
 
+					# TODO: What happens when the resent fragment gets lost?
+
 					# If the index-th fragment's FCN does not have a fragment number, then it is invalid
 					except KeyError:
 						print("No fragment to be recovered")
@@ -177,6 +179,10 @@ while True:
 					except socket.timeout:
 						print("Timed out")
 						exit(1)
+
+				if '0' in bitmap:
+					print("A resent fragment has been lost. What should I do?")
+					exit(1)
 
 			# Add all fragments from the window to the "fragments" array
 			for m in range(2 ** n - 1):
@@ -229,6 +235,6 @@ while True:
 
 # Close the socket and write the received file.
 the_socket.close()
-file = open("received.txt", "wb")
+file = open("received.png", "wb")
 file.write(payload)
 file.close()

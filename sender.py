@@ -56,7 +56,8 @@ the_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 fragmenter = Fragmenter(profile_uplink, payload)
 fragment_list = fragmenter.fragment()
 
-# The fragment sender MUST initialize the Attempts counter to 0 for that Rule ID and DTag value pair (a whole SCHC packet)
+# The fragment sender MUST initialize the Attempts counter to 0 for that Rule ID and DTag value pair
+# (a whole SCHC packet)
 attempts = 0
 
 if len(fragment_list) > (2 ** profile_uplink.M) * profile_uplink.WINDOW_SIZE:
@@ -180,7 +181,9 @@ while i < len(fragment_list):
 
 							# If the C bit is set to 1 then we're done.
 							if c == '1':
-								if ack_window == current_window:
+								print(ack_window)
+								print(current_window)
+								if ack_window == (current_window % 2**profile_uplink.M):
 									print("Last ACK received: Fragments reassembled successfully. End of transmission. (While retransmitting)")
 									break
 								else:
@@ -230,4 +233,4 @@ the_socket.close()
 time.sleep(1)
 
 # Compare if the reassembled file is the same as the original (only on offline testing)
-print(filecmp.cmp("received.txt", filename))
+print(filecmp.cmp("received.png", filename))
