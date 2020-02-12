@@ -117,6 +117,10 @@ while True:
 		# If the FCN does not have a corresponding fragment number, then it almost certainly is an All-1
 		except KeyError:
 
+			# In the Bitmap for the last window, the bit at the right-most position	corresponds either to the tile
+			# numbered 0 or to a tile that is sent / received as "the last one of the SCHC Packet" without explicitly
+			# stating it snumber.
+
 			# Set the rightmost bit of the bitmap to 1 (See SCHC draft).
 			print("[RECV] This seems to be the final fragment.")
 			bitmap = replace_bit(bitmap, len(bitmap) - 1, '1')
@@ -128,17 +132,23 @@ while True:
 
 		# If the fragment is at the end of a window (All-0 or All-1).
 		if fragment_message.is_all_0() or fragment_message.is_all_1():
+			ack_has_been_sent = False
+
+			print(bitmap)
 
 			# Check for lost fragments in the bitmap.
 			if '0' in bitmap:
 
 				number_of_lost_fragments = bitmap.count('0')
 				indices = find(bitmap, '0')
+				print(indices)
 
 				# Create an ACK object and send it as bytes to the sender.
 				print("[ALLX] Sending NACK for lost fragments...")
 				ack = ACK(profile_downlink, rule_id, dtag, w, bitmap, '0')
+				print(ack.to_string())
 				the_socket.sendto(ack.to_bytes(), address)
+				ack_has_been_sent = True
 
 				# For every lost fragment:
 				for j in range(number_of_lost_fragments):
@@ -156,6 +166,7 @@ while True:
 							current_window) + "th window.")
 						window[index] = data_recovered
 						print("[ALLX] Recovered")
+						bitmap = replace_bit(bitmap, fragment_number_recovered, '1')
 
 					# If the index-th fragment's FCN does not have a fragment number, then it is invalid
 					except KeyError:
@@ -171,8 +182,12 @@ while True:
 			for m in range(2 ** n - 1):
 				fragments.append(window[m])
 
-			# If the last received fragment is an All-0, reinitialize variables for next loop
-			if fragment_message.is_all_0():
+			# If the last received fragment is an All-0, send empty ACK and reinitialize variables for next loop
+			if fragment_message.is_all_0() and not ack_has_been_sent:
+				print("[ALLX] Sending NACK after window...")
+				ack = ACK(profile_downlink, rule_id, dtag, w, bitmap, '0')
+				the_socket.sendto(ack.to_bytes(), address)
+
 				current_window += 1
 				window = []
 				bitmap = ''
@@ -214,6 +229,6 @@ while True:
 
 # Close the socket and write the received file.
 the_socket.close()
-file = open("received.png", "wb")
+file = open("received.txt", "wb")
 file.write(payload)
 file.close()
