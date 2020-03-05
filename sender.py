@@ -125,9 +125,6 @@ while i < len(fragment_list):
 				# If the C bit of the ACK is set to 1 and the fragment is an All-1 then we're done.
 				if c == '1' and fragment.is_all_1():
 					if ack_window == current_window:
-						print(ack_window)
-						print("ola")
-						print(current_window)
 						print("Last ACK received: Fragments reassembled successfully. End of transmission.")
 						break
 					else:
@@ -233,4 +230,4 @@ the_socket.close()
 time.sleep(1)
 
 # Compare if the reassembled file is the same as the original (only on offline testing)
-print(filecmp.cmp("received.png", filename))
+print(filecmp.cmp("received.txt", filename))

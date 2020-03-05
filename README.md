@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a basic implementation of the SCHC F/R protocol for large packets. It is intended for use in the Sigfox network, but the ultimate 
+This is a basic implementation of the SCHC F/R protocol for large packets and an emulated uplink loss rate. It is intended for use in the Sigfox network, but the ultimate 
 goal is to use it under *any* LPWAN techology. You can read more about SCHC and its parameters for the Sigfox network
 in these links:
 
@@ -13,7 +13,7 @@ https://tools.ietf.org/html/draft-ietf-lpwan-schc-over-sigfox-00
 
 The code makes use of Python classes for easier message manipulation. The SCHC messages carry lots of different
 parameters inside their headers depending on their types. The classes are grouped inside the "Messages" and the
-"Entities" folders.
+"Entities" folders. I'm currently working in the codes found inside the "WIP" folder, so they shall be ignored for the time being.
 
 ### Messages
 
@@ -45,26 +45,31 @@ The two main scripts are the sender and receiver. For offline testing, the recco
 IP: 127.0.0.1
 PORT: 8889
 FILENAME: your_file.extension
+UPLINK LOSS RATE: Any integer between 0 and 99
 ```
 
 These scripts work using bytes: you can use text or image files (it should work with *any* file, but this has not
-been put to the test). To try these, open two terminals and first execute the receiver.
+been put to the test). To try these, open two terminals and first execute the receiver. The uplink loss rate is an integer between 0 and 99
+and probability of the loss of a SCHC packet. Inside the code you will find that this only applies for non-SCHC-ACK-Request packages. This shall be corrected
+as the project keeps progressing.
 
 ```
-python receiver.py [PORT]
+python receiver.py [PORT] [UPLINK LOSS RATE]
 ```
 
-Then immediately execute the sender.
+Then execute the sender. [FILENAME] was tested with many kinds of files, but now the restriction of the maximum number of windows
+was added, so `example.txt` is the optimal file to be treated with this implementation.
 
 ```
-python sender.py [IP] [PORT] [FILENAME]
+python sender.py [IP] [PORT] [FILENAME] [-hv]
 ```
 
 As it's an offline testing, the communication shall be completed in no time. The log of both scripts will be
-printed on the terminals, so you can see how do they work. The receiver will write an image file, but this is easily 
-changed manually modifying the extension of the output file in the code (this will be corrected soon, so the user
-won't need to modify any code). Then, the sender will compare the original file with the output. If everything has gone
+printed on the terminals, so you can see how do they work. The receiver will write a text file, but this is easily 
+changed manually modifying the extension of the output file in the code. Then, the sender will compare the original file with the output. If everything has gone
 according to plan, it will print "True" as its last words.
+
+**Note: The following sections were written for the last IETF Hackathon in Singapore, so they may not work anymore.**
 
 ### Sigfox backend execution (offline)
 
@@ -155,10 +160,8 @@ All this work you did will be automated in the future, I promise.
 
 ## Future work
 
-All the process of sending the fragments manually to the network will be automated as soon as I get
-a board that doesn't freeze when sending many messages. This will allow to test the SCHC F/R mechanism
-online.
+The main goal is to get this code running in Google Cloud Platform, using Cloud Functions and the Sigfox backend. More on this soon.
 
 ## Author
 
-* Diego S. Wistuba La Torre
+* Diego S. Wistuba La Torre (wistuba at niclabs dot com)

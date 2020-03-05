@@ -1,7 +1,7 @@
 from Messages import SCHC_Frag_Message
 from Messages.Header import Header
 from Messages.Payload import Payload
-
+from functions import *
 
 class Fragment:
 
@@ -24,7 +24,7 @@ class Fragment:
         self.n = profile.N
         self.m = profile.M
 
-        header = str(bin(int.from_bytes(fragment[0], 'little')))[2:].zfill(self.header_length)
+        header = zfill(str(bin(int.from_bytes(fragment[0], 'little')))[2:], self.header_length)
         payload = fragment[1]
 
         rule_id = str(header[:self.rule_id_size])

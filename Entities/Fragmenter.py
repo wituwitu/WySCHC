@@ -2,7 +2,7 @@
 
 from math import ceil, floor
 from Messages.Header import Header
-
+from functions import *
 
 class Fragmenter:
 	profile = None
@@ -23,8 +23,8 @@ class Fragmenter:
 		print("[FRGM] Fragmenting message into " + str(number_of_fragments) + " pieces...")
 
 		for i in range(number_of_fragments):
-			w = bin(int(floor((i/(2**n - 1) % (2 ** m)))))[2:].zfill(2)
-			fcn = bin((2 ** n - 2) - (i % (2 ** n - 1)))[2:].zfill(3)
+			w = zfill(bin(int(floor((i/(2**n - 1) % (2 ** m)))))[2:], 2)
+			fcn = zfill(bin((2 ** n - 2) - (i % (2 ** n - 1)))[2:], 3)
 
 			fragment_payload = message[i * payload_max_length:(i + 1) * payload_max_length]
 

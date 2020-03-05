@@ -11,6 +11,14 @@ from Entities.Reassembler import Reassembler
 from Entities.Sigfox import Sigfox
 from Messages.ACK import ACK
 from Messages.Fragment import Fragment
+from functions import *
+
+
+def insert_index(list, pos, elmt):
+	while len(list) < pos:
+		list.append([])
+	list.insert(pos, elmt)
+	# maybe should try with replace...
 
 
 def replace_bit(string, position, value):
@@ -21,23 +29,23 @@ def find(string, character):
 	return [i for i, ltr in enumerate(string) if ltr == character]
 
 
-def get_fragments(device_id, limit,
-				  auth="Basic NWRjNDY1ZjRlODMzZDk0MWY2Y2M0Y2QzOjBmMjQ1NDI0MTg2YTMxNDhjYzJkNWJiYjI0MDUwOWY5"):
-	url = "https://api.sigfox.com/v2/devices/{}/messages".format(device_id)
-	payload = ''
-	headers = {
-		"Accept": "application/json",
-		"Content-Type": "application/x-www-form-urlencoded",
-		"Authorization": auth,
-		"cache-control": "no-cache"
-	}
-	params = {"limit": limit}
-	response = requests.request("GET", url, data=payload, headers=headers, params=params)
-	parsed = response.json()
-	byte_array = []
-	values = parsed["data"]
-	for val in values:
-		byte_array.append(bytearray.fromhex(val["data"]))
+# def get_fragments(device_id, limit,
+# 				  auth="Basic NWRjNDY1ZjRlODMzZDk0MWY2Y2M0Y2QzOjBmMjQ1NDI0MTg2YTMxNDhjYzJkNWJiYjI0MDUwOWY5"):
+# 	url = "https://api.sigfox.com/v2/devices/{}/messages".format(device_id)
+# 	payload = ''
+# 	headers = {
+# 		"Accept": "application/json",
+# 		"Content-Type": "application/x-www-form-urlencoded",
+# 		"Authorization": auth,
+# 		"cache-control": "no-cache"
+# 	}
+# 	params = {"limit": limit}
+# 	response = requests.request("GET", url, data=payload, headers=headers, params=params)
+# 	parsed = response.json()
+# 	byte_array = []
+# 	values = parsed["data"]
+# 	for val in values:
+# 		byte_array.append(bytearray.fromhex(val["data"]))
 
 
 # Delete the previously received file (only on offline testing)
@@ -55,36 +63,46 @@ port = int(sys.argv[1])
 loss_rate = int(sys.argv[2])
 
 # Initialize variables.
+the_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+the_socket.bind((ip, port))
+
 profile_uplink = Sigfox("UPLINK", "ACK ON ERROR")
 profile_downlink = Sigfox("DOWNLINK", "NO ACK")
 buffer_size = profile_uplink.MTU
 n = profile_uplink.N
-w = profile_uplink.M
-the_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-the_socket.bind((ip, port))
+m = profile_uplink.M
+
 current_window = 0
 fragments = []
+
 window = []
+for i in range(2 ** n - 1):
+	window.append([b"", b""])
+
+all_windows = []
+for i in range(2**m):
+	all_windows.append([])
+	for j in range(2 ** n - 1):
+		all_windows[i].append([b"", b""])
+
+
 payload = ''
 bitmap = ''
 for l in range(profile_uplink.BITMAP_SIZE):
 	bitmap += '0'
 fcn_dict = {}
 for j in range(2 ** n - 1):
-	fcn_dict[bin((2 ** n - 2) - (j % (2 ** n - 1)))[2:].zfill(3)] = j
+	fcn_dict[zfill(bin((2 ** n - 2) - (j % (2 ** n - 1)))[2:], 3)] = j
 
 # Start receiving fragments.
 while True:
-
-	# Initialize window
-	for i in range(2 ** n - 1):
-		window.append(b"")
 
 	# Set the timeout for INACTIVITY_TIMER_VALUE
 	the_socket.settimeout(profile_uplink.INACTIVITY_TIMER_VALUE)
 
 	# Receive fragment
 	try:
+		print(bitmap)
 		fragment, address = the_socket.recvfrom(buffer_size)
 
 		# A fragment has the format "fragment = [header, payload]".
@@ -106,13 +124,13 @@ while True:
 		# Try finding the fragment number from the FCN of the fragment.
 		try:
 			fragment_number = fcn_dict[fragment_message.header.FCN]
+			current_window = int(fragment_message.header.W, 2)
+
 			print("[RECV] This corresponds to the " + str(fragment_number) + "th fragment of the " + str(
 				current_window) + "th window.")
 
-			# Set the fragment_number-th bit of the bitmap to 1 and add the fragment to the fragment_number-th position
-			# in the current window.
 			bitmap = replace_bit(bitmap, fragment_number, '1')
-			window[fragment_number] = data
+			all_windows[current_window][fragment_number] = data
 
 		# If the FCN does not have a corresponding fragment number, then it almost certainly is an All-1
 		except KeyError:
@@ -161,10 +179,11 @@ while True:
 						data_recovered = [bytes([fragment_recovered[0]]), bytearray(fragment_recovered[1:])]
 						fragment_message_recovered = Fragment(profile_uplink, data_recovered)
 						fragment_number_recovered = fcn_dict[fragment_message_recovered.header.FCN]
+						current_window_recovered = int(fragment_message_recovered.header.W, 2)
 						print("[ALLX] This corresponds to the " + str(
 							fragment_number_recovered) + "th fragment of the " + str(
-							current_window) + "th window.")
-						window[index] = data_recovered
+							current_window_recovered) + "th window.")
+						all_windows[current_window_recovered][index] = data_recovered
 						print("[ALLX] Recovered")
 						bitmap = replace_bit(bitmap, fragment_number_recovered, '1')
 
@@ -180,22 +199,18 @@ while True:
 						print("Timed out")
 						exit(1)
 
-				if '0' in bitmap:
+				if '0' in bitmap and not fragment_message.is_all_1():
 					print("A resent fragment has been lost. What should I do?")
 					exit(1)
 
-			# Add all fragments from the window to the "fragments" array
-			for m in range(2 ** n - 1):
-				fragments.append(window[m])
+			# If the last received fragment is an All-0 and every fragment has been received,
+			# send empty ACK and reinitialize variables for next loop
 
-			# If the last received fragment is an All-0, send empty ACK and reinitialize variables for next loop
-			if fragment_message.is_all_0() and not ack_has_been_sent:
-				print("[ALLX] Sending NACK after window...")
-				ack = ACK(profile_downlink, rule_id, dtag, w, bitmap, '0')
-				the_socket.sendto(ack.to_bytes(), address)
-
-				current_window += 1
-				window = []
+			if fragment_message.is_all_0() and bitmap[0] == '1' and all(bitmap):
+				if not ack_has_been_sent:
+					print("[ALLX] Sending NACK after window...")
+					ack = ACK(profile_downlink, rule_id, dtag, w, bitmap, '0')
+					the_socket.sendto(ack.to_bytes(), address)
 				bitmap = ''
 				for k in range(profile_uplink.BITMAP_SIZE):
 					bitmap += '0'
@@ -206,8 +221,12 @@ while True:
 				# If everything has gone according to plan, there shouldn't be any empty spaces
 				# between two received fragments. So the first occurrence of an empty space should be the position
 				# of the final fragment.
-				last_index = fragments.index(b'')
-				fragments[last_index] = data
+				last_index = all_windows[current_window].index([b'', b''])
+				all_windows[current_window][last_index] = data
+
+				for i in range(2 ** m):
+					for j in range(2 ** n - 1):
+						fragments.append(all_windows[i][j])
 
 				# Reassemble.
 				print("[ALL1] Last fragment. Reassembling...")
@@ -233,8 +252,12 @@ while True:
 		print("Timed out")
 		exit(1)
 
+	print("To the next...")
+
 # Close the socket and write the received file.
 the_socket.close()
-file = open("received.png", "wb")
+
+# Change the extension of the file if you need, default is .txt
+file = open("received.txt", "wb")
 file.write(payload)
 file.close()

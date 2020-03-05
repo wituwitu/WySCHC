@@ -47,8 +47,7 @@ def callback_data(request):
 			if not topic or not project_id:
 				print('Error reading Function environment variables')
 				return abort(500)
-			topic_name = 'projects/{project_id}/topics/{topic}'.format(
-				project_id=project_id, topic=topic)
+			topic_name = 'projects/{project_id}/topics/{topic}'.format(project_id=project_id, topic=topic)
 
 			try:
 				time_int = int(request_dict['time'])
@@ -61,45 +60,27 @@ def callback_data(request):
 			print('Message published to Pub/Sub topic: {}'.format(topic_name))
 
 			if 'ack' in request_dict:
-				if request_dict['ack'] == 'true' and request_dict['device'] and request_dict['deviceType']:
+				if (request_dict['ack'] == 'true' and request_dict['device'] and request_dict['deviceType']):
 					device_type = request_dict['deviceType']
-					ds_kind = os.environ.get('DATASTORE_KIND')
-					ds_property = os.environ.get('DATASTORE_PROPERTY')
-
-					ds_client = datastore.Client()
-					ds_key = ds_client.key(ds_kind, device_type)
-					e = ds_client.get(ds_key)
-					if not e:
-						print('Datastore entity not found for ' 'deviceType: {}'.format(device_type))
-						return '', 204
-					elif ds_property not in e:
-						print('Datastore property: {} not found for ' 'deviceType: {}'.format(ds_property, device_type))
-						return '', 204
-					elif len(e[ds_property]) > 16:
-						print(
-							'Datastore config: {} wrong length for deviceType: {}. ' 'Should be max 16 HEX characters ' '(8 bytes)'.format(
-								e[ds_property], device_type))
-						return '', 204
-					else:
-						device = request_dict['device']
-						response_dict = {}
-						response_dict[device] = {'downlinkData': e[ds_property]}
-						response_json = json.dumps(response_dict)
-						print('Sending downlink message: {}'.format(response_json))
-						return response_json, 200
+					device = request_dict['device']
+					response_dict = {}
+					response_dict[device] = {'downlinkData': '0123456789ABCDEF'}
+					response_json = json.dumps(response_dict)
+					print('Sending downlink message: {}'.format(response_json))
+					return response_json, 200
 				else:
 					return '', 204
 			else:
 				return '', 204
 		else:
-			print('Invalid HTTP Basic Authentication: ' '{}'.format(request.authorization))
+			print('Invalid HTTP Basic Authentication: '
+				  '{}'.format(request.authorization))
 			return abort(401)
 	else:
-		print('Invalid HTTP Method to invoke Cloud Function. ' 'Only POST supported')
+		print('Invalid HTTP Method to invoke Cloud Function. '
+			  'Only POST supported')
 		return abort(405)
-
-
-# [END functions_callback_data]
+	# [END functions_callback_data]
 
 
 def callback_service(request):
@@ -127,9 +108,10 @@ def callback_service(request):
 			print('Received Sigfox service message: {}'.format(request_dict))
 			return '', 204
 		else:
-			print('Invalid HTTP Basic Authentication: ' '{}'.format(request.authorization))
+			print('Invalid HTTP Basic Authentication: '
+				  '{}'.format(request.authorization))
 			return abort(401)
 	else:
 		print('Invalid HTTP Method to invoke Cloud Function. Only POST supported')
 		return abort(405)
-# [END functions_callback_service]
+	# [END functions_callback_service]
