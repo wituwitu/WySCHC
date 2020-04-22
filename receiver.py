@@ -18,7 +18,6 @@ def insert_index(list, pos, elmt):
 	while len(list) < pos:
 		list.append([])
 	list.insert(pos, elmt)
-	# maybe should try with replace...
 
 
 def replace_bit(string, position, value):
@@ -97,8 +96,6 @@ for j in range(2 ** n - 1):
 # Start receiving fragments.
 while True:
 
-	# Set the timeout for INACTIVITY_TIMER_VALUE
-	the_socket.settimeout(profile_uplink.INACTIVITY_TIMER_VALUE)
 
 	# Receive fragment
 	try:
