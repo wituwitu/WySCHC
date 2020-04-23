@@ -5,11 +5,9 @@ import sys
 import os
 import glob
 from math import ceil, floor
+from datetime import datetime
 
 # ONLY ON OFFLINE TESTING - begin
-
-
-
 
 # Delete the previously received file
 for filename in glob.glob("received*"):
@@ -27,16 +25,34 @@ loss_rate = int(sys.argv[2])
 the_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 the_socket.bind((ip, port))
 
-
 # ONLY ON OFFLINE TESTING - end
 
+# Check for a message. When a message is received, trigger the rest of the function
+
 while True:
-	# This is the code to be run on GCP, a message handler
+
+	time_format = "%H:%M:%S"
+
+	fragment, address = the_socket.recvfrom(12 * 8)
+
+	if not fragment:
+		print("Fragment not received...")
+
+		time_now = datetime.now()
+		timestamp = open("timestamp", "r")
+		time_received_str = timestamp.read()
+		timestamp.close()
+		time_received = datetime.strptime(time_received_str, time_format)
+		delta = time_now - time_received
+
+		if delta.total_seconds() > 10:
+			print("Inactivity timer reached. Ignoring execution.")
+			break
+
+		continue
 
 	#  CLASSES
-
 	# -fragment elements
-
 	class Header:
 		profile = None
 
@@ -152,9 +168,7 @@ while True:
 			for x in fcn:
 				fcn_set.add(x)
 			return len(fcn_set) == 1 and "0" in fcn_set
-
 	#  -special messages
-
 	class ACK:
 
 		profile = None
@@ -193,9 +207,7 @@ while True:
 
 		def to_bytes(self):
 			return self.header + self.padding
-
 	# -entities
-
 	class Fragmenter:
 		profile = None
 		schc_packet = None
@@ -343,9 +355,7 @@ while True:
 
 				else:
 					pass
-
 	#  FUNCTIONS
-
 	def zfill(string, width):
 		if len(string) < width:
 			return ("0" * (width - len(string))) + string
@@ -362,7 +372,16 @@ while True:
 
 	# ACTUAL CODE
 
+	print("The function has been triggered.")
+
 	# Initialize variables.
+
+	print("Initializing variables...")
+
+	time_received = datetime.now()
+	timestamp = open("timestamp", "w")
+	timestamp.write(time_received.strftime(time_format))
+	timestamp.close()
 
 	profile_uplink = Sigfox("UPLINK", "ACK ON ERROR")
 	profile_downlink = Sigfox("DOWNLINK", "NO ACK")
@@ -370,46 +389,241 @@ while True:
 	n = profile_uplink.N
 	m = profile_uplink.M
 	current_window = 0
-	fragments = []
+
+	if len(fragment) != buffer_size:
+		break
+
+	# creating many files
+
+	# ./tmp
+	# ./bitmap
+	# ./fragment
+	# ./all_windows/window/fragment
+
+	cwd = os.getcwd()
+
+	bitmap_file = open("bitmap", "w")
+	if os.path.getsize("bitmap") == 0:
+		for l in range(profile_uplink.BITMAP_SIZE):
+			bitmap_file.write("0")
+	bitmap_file.close()
+	bitmap_file = open("bitmap", "r")
+	bitmap = bitmap_file.read()
+	bitmap_file.close()
+
+	# all windows:
+	os.mkdir("all_windows")
+	os.chdir("./all_windows")
+	for i in range(2 ** m):
+		os.mkdir("window_" + str(i))
+		os.chdir("./window_" + str(i))
+		for j in range(2 ** n - 1):
+			file = open("fragment_" + str(i) + "_" + str(j), "wb")
+			file.close()
+		os.chdir("..")
+	os.chdir("..")
+
 	window = []
 	for i in range(2 ** n - 1):
 		window.append([b"", b""])
 
-	all_windows = []
-	for i in range(2 ** m):
-		all_windows.append([])
-		for j in range(2 ** n - 1):
-			all_windows[i].append([b"", b""])
-
 	payload = ''
-	bitmap = ''
-	for l in range(profile_uplink.BITMAP_SIZE):
-		bitmap += '0'
 	fcn_dict = {}
 	for j in range(2 ** n - 1):
 		fcn_dict[zfill(bin((2 ** n - 2) - (j % (2 ** n - 1)))[2:], 3)] = j
 
-	# Set the timeout for INACTIVITY_TIMER_VALUE
 	the_socket.settimeout(profile_uplink.INACTIVITY_TIMER_VALUE)
 
+
+	# A fragment has the format "fragment = [header, payload]".
+	data = [bytes([fragment[0]]), bytearray(fragment[1:])]
+
+	# Convert to a Fragment class for easier manipulation.
+	fragment_message = Fragment(profile_uplink, data)
+
+	# This avoids All-0 and All-1 fragments being lost for testing purposes.
+	if not fragment_message.is_all_0() and not fragment_message.is_all_1():
+		# Lose packet with certain probability and exit
+		coin = random.random()
+		if coin * 100 < loss_rate:
+			print("[LOSS] The packet was lost.")
+			continue
+
+	# Try finding the fragment number from the FCN of the fragment.
 	try:
-		fragment, address = the_socket.recvfrom(buffer_size)
+		fragment_number = fcn_dict[fragment_message.header.FCN]
+		current_window = int(fragment_message.header.W, 2)
 
-		f = open("recv", "wb")
+		print("[RECV] This corresponds to the " + str(fragment_number) + "th fragment of the " + str(
+			current_window) + "th window.")
 
-		# A fragment has the format "fragment = [header, payload]".
-		data = [bytes([fragment[0]]), bytearray(fragment[1:])]
+		bitmap = replace_bit(bitmap, fragment_number, '1')
+		bitmap_file = open("bitmap", "w")
+		bitmap_file.write(bitmap)
+		bitmap_file.close()
 
-		# Convert to a Fragment class for easier manipulation.
-		fragment_message = Fragment(profile_uplink, data)
+		path = "./all_windows/window_%d/fragment%d" % (current_window, fragment_number)
+		os.chdir(path)
+		fragment_file = open("fragment_%d" % fragment_number, "wb")
+		fragment_file.write(data[0])
+		fragment_file.write(data[1])
+		fragment_file.close()
+		os.chdir(cwd)
 
-		# This avoids All-0 and All-1 fragments being lost for testing purposes.
-		if not fragment_message.is_all_0() and not fragment_message.is_all_1():
-			# Lose packet with certain probability and exit
-			coin = random.random()
-			if coin * 100 < loss_rate:
-				print("[LOSS] The packet was lost.")
-				exit(0)
+	# If the FCN does not have a corresponding fragment number, then it almost certainly is an All-1
+	except KeyError:
 
-	except socket.timeout:
-		pass
+		# In the Bitmap for the last window, the bit at the right-most position	corresponds either to the tile
+		# numbered 0 or to a tile that is sent / received as "the last one of the SCHC Packet" without explicitly
+		# stating it snumber.
+
+		# Set the rightmost bit of the bitmap to 1 (See SCHC draft).
+		print("[RECV] This seems to be the final fragment.")
+
+		bitmap = replace_bit(bitmap, len(bitmap) - 1, '1')
+		bitmap_file = open("bitmap", "w")
+		bitmap_file.write(bitmap)
+		bitmap_file.close()
+
+	# Extract information from the fragment
+	rule_id = fragment_message.header.RULE_ID
+	dtag = fragment_message.header.DTAG
+	w = fragment_message.header.W
+
+	# If the fragment is at the end of a window (All-0 or All-1).
+	if fragment_message.is_all_0() or fragment_message.is_all_1():
+		ack_has_been_sent = False
+
+		print(bitmap)
+
+		# Check for lost fragments in the bitmap.
+		if '0' in bitmap:
+			number_of_lost_fragments = bitmap.count('0')
+			indices = find(bitmap, '0')
+			print(indices)
+
+			# Create an ACK object and send it as bytes to the sender.
+			print("[ALLX] Sending NACK for lost fragments...")
+			ack = ACK(profile_downlink, rule_id, dtag, w, bitmap, '0')
+			print(ack.to_string())
+			the_socket.sendto(ack.to_bytes(), address)
+			ack_has_been_sent = True
+
+			# For every lost fragment:
+			for j in range(number_of_lost_fragments):
+				index = indices[j]
+
+				# Try recovering the index-th fragment
+				try:
+					print("[ALLX] Recovering " + str(index) + "th fragment...")
+					fragment_recovered, address = the_socket.recvfrom(buffer_size)
+					data_recovered = [bytes([fragment_recovered[0]]), bytearray(fragment_recovered[1:])]
+					fragment_message_recovered = Fragment(profile_uplink, data_recovered)
+					fragment_number_recovered = fcn_dict[fragment_message_recovered.header.FCN]
+					current_window_recovered = int(fragment_message_recovered.header.W, 2)
+					print("[ALLX] This corresponds to the " + str(
+						fragment_number_recovered) + "th fragment of the " + str(
+						current_window_recovered) + "th window.")
+
+					path = "./all_windows/window_%d/fragment%d" % (current_window_recovered, fragment_number_recovered)
+					os.chdir(path)
+					fragment_file_recovered = open("fragment_%d" % fragment_number_recovered, "wb")
+					fragment_file_recovered.write(data_recovered[0])
+					fragment_file_recovered.write(data_recovered[1])
+					fragment_file_recovered.close()
+					os.chdir(cwd)
+					print("[ALLX] Recovered")
+					bitmap = replace_bit(bitmap, fragment_number_recovered, '1')
+					bitmap_file = open("bitmap", "w")
+					bitmap_file.write(bitmap)
+					bitmap_file.close()
+
+
+				# If the index-th fragment's FCN does not have a fragment number, then it is invalid
+				except KeyError:
+					print("No fragment to be recovered")
+					continue
+
+				# If no fragment was received, something nasty happened.
+				except socket.timeout:
+					print("Timed out")
+					exit(1)
+
+			if '0' in bitmap and not fragment_message.is_all_1():
+				print("A resent fragment has been lost. What should I do?")
+				exit(1)
+
+		# If the last received fragment is an All-0 and every fragment has been received,
+		# send empty ACK and reinitialize variables for next loop
+
+		if fragment_message.is_all_0() and bitmap[0] == '1' and all(bitmap):
+			if not ack_has_been_sent:
+				print("[ALLX] Sending NACK after window...")
+				ack = ACK(profile_downlink, rule_id, dtag, w, bitmap, '0')
+				the_socket.sendto(ack.to_bytes(), address)
+
+			bitmap = ''
+			bitmap_file = open("bitmap", "w")
+			bitmap_file.write(bitmap)
+			bitmap_file.close()
+
+			for k in range(profile_uplink.BITMAP_SIZE):
+				bitmap += '0'
+
+		# If the last received fragment is an All-1, start reassembling.
+		if fragment_message.is_all_1():
+
+			fragments = []
+
+			# If everything has gone according to plan, there shouldn't be any empty spaces
+			# between two received fragments. So the first occurrence of an empty space should be the position
+			# of the final fragment.
+
+			i = 0
+			while i < 2 ** n - 1:
+				if os.path.getsize("./all_windows/window_%d/fragment_%d" % (current_window, i)) == 0:
+					last_index = i
+					break
+				else:
+					i += 1
+
+			path = "./all_windows/window_%d/fragment_%d" % (current_window, last_index)
+			os.chdir(path)
+			fragment_file = open("fragment_%d" % last_index, "wb")
+			fragment_file.write(data[0])
+			fragment_file.write(data[1])
+			fragment_file.close()
+			os.chdir(cwd)
+
+			for i in range(2 ** m):
+				for j in range(2 ** n - 1):
+					fragment_file = open("./all_windows/window_%d/fragment_%d" % (i, j), "r")
+					ultimate_header = fragment_file.read(1)
+					ultimate_payload = fragment_file.read()
+					ultimate_fragment = [ultimate_header, ultimate_payload]
+					fragments.append(ultimate_fragment)
+
+			# Reassemble.
+			print("[ALL1] Last fragment. Reassembling...")
+			reassembler = Reassembler(profile_uplink, fragments)
+			payload = bytearray(reassembler.reassemble())
+
+			# Send the last ACK with the C bit set to 1.
+			print("[ALL1] Reassembled: Sending last ACK")
+
+			# "if the C bit is set to 1, no bitmap is carried."
+			bitmap = ''
+			for k in range(profile_uplink.BITMAP_SIZE):
+				bitmap += '0'
+
+			last_ack = ACK(profile_downlink, rule_id, dtag, w, bitmap, '1')
+			the_socket.sendto(last_ack.to_bytes(), address)
+
+			file = open("received.txt", "wb")
+			file.write(payload)
+			file.close()
+
+			the_socket.close()
+			# End loop
+			break
+
