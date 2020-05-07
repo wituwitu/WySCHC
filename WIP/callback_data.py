@@ -97,38 +97,3 @@ def callback_data(request):
 		print('Invalid HTTP Method to invoke Cloud Function. '
 			  'Only POST supported')
 		return abort(405)
-	# [END functions_callback_data]
-
-
-def callback_service(request):
-	# [START functions_callback_service]
-	"""HTTP Cloud Function.
-  Args:
-       data (dict): The dictionary with data specific to the given event.
-       context (google.cloud.functions.Context): The Cloud Functions event
-       metadata.
-  """
-	import os
-	import json
-	import base64
-	import datetime
-	from flask import abort
-
-	if request.method == 'POST':
-		http_user = os.environ.get('HTTP_USER')
-		http_passwd = os.environ.get('HTTP_PASSWD')
-		request_user = request.authorization["username"]
-		request_passwd = request.authorization["password"]
-
-		if request_user == http_user and request_passwd == http_passwd:
-			request_dict = request.get_json()
-			print('Received Sigfox service message: {}'.format(request_dict))
-			return '', 204
-		else:
-			print('Invalid HTTP Basic Authentication: '
-				  '{}'.format(request.authorization))
-			return abort(401)
-	else:
-		print('Invalid HTTP Method to invoke Cloud Function. Only POST supported')
-		return abort(405)
-	# [END functions_callback_service]
