@@ -122,6 +122,8 @@ while i < len(fragment_list):
 				index_c = index + profile_uplink.BITMAP_SIZE
 				c = ack.decode()[index_c]
 
+				print(c)
+
 				# If the C bit of the ACK is set to 1 and the fragment is an All-1 then we're done.
 				if c == '1' and fragment.is_all_1():
 					if ack_window == current_window:
