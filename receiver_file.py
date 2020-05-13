@@ -370,8 +370,6 @@ while True:
 			print("[LOSS] The packet was lost.")
 			continue
 
-	# ----------Fragment loss emulation
-
 	# ACTUAL CODE: A fragment was received.
 	# Initialize variables.
 
@@ -436,7 +434,6 @@ while True:
 
 	# Convert to a Fragment class for easier manipulation.
 	fragment_message = Fragment(profile_uplink, data)
-
 	current_window = int(fragment_message.header.W, 2)
 
 	with open("./all_windows/window_%d/bitmap_%d" % (current_window, current_window), "r") as bitmap_file:
@@ -486,15 +483,13 @@ while True:
 	dtag = fragment_message.header.DTAG
 	w = fragment_message.header.W
 
-	# If the fragment is at the end of a window (All-0 or All-1).
+	# If the fragment is at the end of a window (All-0 or All-1)
 	if fragment_message.is_all_0() or fragment_message.is_all_1():
 		# ack_has_been_sent = False
 
 		print("CURRENT BITMAP: " + bitmap)
 
 		# Check for the first window that has lost fragments
-
-		bitmap_ack = ''
 
 		for i in range(current_window + 1):
 			with open("./all_windows/window_%d/bitmap_%d" % (i, i), "r") as bitmap_file:
@@ -513,7 +508,7 @@ while True:
 
 			# Create an ACK object and send it as bytes to the sender.
 			print("[ALLX] Sending NACK for lost fragments...")
-			ack = ACK(profile_downlink, rule_id, dtag, zfill(str(window_ack), m), bitmap_ack, '0')
+			ack = ACK(profile_downlink, rule_id, dtag, zfill(format(window_ack, 'b'), m), bitmap_ack, '0')
 			print(ack.to_string())
 			the_socket.sendto(ack.to_bytes(), address)
 			continue
@@ -569,13 +564,6 @@ while True:
 			ack = ACK(profile_downlink, rule_id, dtag, w, bitmap, '0')
 			the_socket.sendto(ack.to_bytes(), address)
 			continue
-
-			# bitmap = ''
-			# with open("bitmap", "w") as bitmap_file:
-			# 	bitmap_file.write(bitmap)
-			#
-			# for k in range(profile_uplink.BITMAP_SIZE):
-			# 	bitmap += '0'
 
 		# If the last received fragment is an All-1, start reassembling.
 		if fragment_message.is_all_1():

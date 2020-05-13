@@ -98,16 +98,6 @@ while i < len(fragment_list):
 
 		while attempts < profile_uplink.MAX_ACK_REQUESTS:
 
-			# Clash:
-			# JCZ: Leyendo la especificación de nuevo, veo que no debe de incrementarse el contador de Attempts
-			# después de enviar un All-0, ya que como indicas esto penalizaría el numero de solicitudes injustamente.
-			# Draft: Each time a fragment sender sends an All-1 SCHC Fragment or a SCHC ACK REQ,
-			# it MUST increment the Attempts counter
-
-			# All-0 and ACKREQ are NOT ALWAYS THE SAME CONCEPT
-
-			# REMOVED: attempts += 1
-
 			# Try receiving an ACK from the receiver.
 			try:
 				ack, address = the_socket.recvfrom(profile_downlink.MTU)
