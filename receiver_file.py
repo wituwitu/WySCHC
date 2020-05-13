@@ -367,7 +367,7 @@ while True:
 	if not fragment_message.is_all_0() and not fragment_message.is_all_1():
 		coin = random.random()
 		if coin * 100 < loss_rate:
-			print("[LOSS] The packet was lost.")
+			print("[LOSS] The fragment was lost.")
 			continue
 
 	# ACTUAL CODE: A fragment was received.
@@ -486,8 +486,6 @@ while True:
 	# If the fragment is at the end of a window (All-0 or All-1)
 	if fragment_message.is_all_0() or fragment_message.is_all_1():
 
-		print("CURRENT BITMAP: " + bitmap)
-
 		# Check for the first window that has lost fragments
 
 		for i in range(current_window + 1):
@@ -496,8 +494,6 @@ while True:
 				window_ack = i
 			if '0' in bitmap_ack:
 				break
-
-		print("ACK BITMAP: " + bitmap_ack)
 
 		# Check for lost fragments in the bitmap (All-0).
 		if '0' in bitmap_ack and fragment_message.is_all_0():
@@ -542,7 +538,7 @@ while True:
 			while j < 2 ** n - 1:
 				if os.path.exists("./all_windows/window_%d/fragment_%d_%d" % (current_window, current_window, j))\
 						and os.path.getsize("./all_windows/window_%d/fragment_%d_%d" % (current_window, current_window, j)) != 0:
-					last_received_index = j
+					last_received_index = j + 1
 				j += 1
 
 			print(last_index)
@@ -560,52 +556,52 @@ while True:
 				the_socket.sendto(ack.to_bytes(), address)
 				continue
 
+			else:
+				fragments = []
 
-			fragments = []
+				# If everything has gone according to plan, there shouldn't be any empty spaces
+				# between two received fragments. So the first occurrence of an empty space should be the position
+				# of the final fragment.
 
-			# If everything has gone according to plan, there shouldn't be any empty spaces
-			# between two received fragments. So the first occurrence of an empty space should be the position
-			# of the final fragment.
+				print(current_window)
+				print(last_index)
 
-			print(current_window)
-			print(last_index)
+				path = "./all_windows/window_%d/" % current_window
+				os.chdir(path)
+				with open("fragment_%d_%d" % (current_window, last_index), "wb") as fragment_file:
+					fragment_file.write(data[0])
+					fragment_file.write(data[1])
+				os.chdir(cwd)
 
-			path = "./all_windows/window_%d/" % current_window
-			os.chdir(path)
-			with open("fragment_%d_%d" % (current_window, last_index), "wb") as fragment_file:
-				fragment_file.write(data[0])
-				fragment_file.write(data[1])
-			os.chdir(cwd)
+				for i in range(2 ** m):
+					for j in range(2 ** n - 1):
+						fragment_file = open("./all_windows/window_%d/fragment_%d_%d" % (i, i, j), "r")
+						ultimate_header = fragment_file.read(1)
+						ultimate_payload = fragment_file.read()
+						ultimate_fragment = [ultimate_header.encode(), ultimate_payload.encode()]
+						fragments.append(ultimate_fragment)
 
-			for i in range(2 ** m):
-				for j in range(2 ** n - 1):
-					fragment_file = open("./all_windows/window_%d/fragment_%d_%d" % (i, i, j), "r")
-					ultimate_header = fragment_file.read(1)
-					ultimate_payload = fragment_file.read()
-					ultimate_fragment = [ultimate_header.encode(), ultimate_payload.encode()]
-					fragments.append(ultimate_fragment)
+				# Reassemble.
+				print("[ALL1] Last fragment. Reassembling...")
+				reassembler = Reassembler(profile_uplink, fragments)
+				payload = bytearray(reassembler.reassemble())
 
-			# Reassemble.
-			print("[ALL1] Last fragment. Reassembling...")
-			reassembler = Reassembler(profile_uplink, fragments)
-			payload = bytearray(reassembler.reassemble())
+				# Send the last ACK with the C bit set to 1.
+				print("[ALL1] Reassembled: Sending last ACK")
 
-			# Send the last ACK with the C bit set to 1.
-			print("[ALL1] Reassembled: Sending last ACK")
+				# "if the C bit is set to 1, no bitmap is carried."
+				bitmap = ''
+				for k in range(profile_uplink.BITMAP_SIZE):
+					bitmap += '0'
+				# with open("bitmap", "w") as bitmap_file:
+				#	bitmap_file.write(bitmap)
 
-			# "if the C bit is set to 1, no bitmap is carried."
-			bitmap = ''
-			for k in range(profile_uplink.BITMAP_SIZE):
-				bitmap += '0'
-			# with open("bitmap", "w") as bitmap_file:
-			#	bitmap_file.write(bitmap)
+				last_ack = ACK(profile_downlink, rule_id, dtag, w, bitmap, '1')
+				the_socket.sendto(last_ack.to_bytes(), address)
 
-			last_ack = ACK(profile_downlink, rule_id, dtag, w, bitmap, '1')
-			the_socket.sendto(last_ack.to_bytes(), address)
+				with open("received.txt", "wb") as file:
+					file.write(payload)
 
-			with open("received.txt", "wb") as file:
-				file.write(payload)
-
-			the_socket.close()
-			# End loop
-			break
+				the_socket.close()
+				# End loop
+				break
