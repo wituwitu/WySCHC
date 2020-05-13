@@ -466,7 +466,7 @@ while True:
 
 		# In the Bitmap for the last window, the bit at the right-most position	corresponds either to the tile
 		# numbered 0 or to a tile that is sent / received as "the last one of the SCHC Packet" without explicitly
-		# stating it snumber.
+		# stating its number.
 
 		# Set the rightmost bit of the bitmap to 1 (See SCHC draft).
 		print("[RECV] This seems to be the final fragment.")
@@ -485,7 +485,6 @@ while True:
 
 	# If the fragment is at the end of a window (All-0 or All-1)
 	if fragment_message.is_all_0() or fragment_message.is_all_1():
-		# ack_has_been_sent = False
 
 		print("CURRENT BITMAP: " + bitmap)
 
@@ -500,8 +499,8 @@ while True:
 
 		print("ACK BITMAP: " + bitmap_ack)
 
-		# Check for lost fragments in the bitmap.
-		if '0' in bitmap_ack:
+		# Check for lost fragments in the bitmap (All-0).
+		if '0' in bitmap_ack and fragment_message.is_all_0():
 			number_of_lost_fragments = bitmap_ack.count('0')
 			indices = find(bitmap_ack, '0')
 			print(indices)
@@ -512,48 +511,6 @@ while True:
 			print(ack.to_string())
 			the_socket.sendto(ack.to_bytes(), address)
 			continue
-			# ack_has_been_sent = True
-
-			# For every lost fragment:
-			# for j in range(number_of_lost_fragments):
-			# 	index = indices[j]
-			#
-			# 	# Try recovering the index-th fragment
-			# 	try:
-			# 		print("[ALLX] Recovering " + str(index) + "th fragment...")
-			# 		fragment_recovered, address = the_socket.recvfrom(buffer_size)
-			# 		data_recovered = [bytes([fragment_recovered[0]]), bytearray(fragment_recovered[1:])]
-			# 		fragment_message_recovered = Fragment(profile_uplink, data_recovered)
-			# 		fragment_number_recovered = fcn_dict[fragment_message_recovered.header.FCN]
-			# 		current_window_recovered = int(fragment_message_recovered.header.W, 2)
-			# 		print("[ALLX] This corresponds to the " + str(
-			# 			fragment_number_recovered) + "th fragment of the " + str(
-			# 			current_window_recovered) + "th window.")
-			#
-			# 		path = "./all_windows/window_%d/" % current_window_recovered
-			# 		os.chdir(path)
-			# 		with open("fragment_%d_%d" % (current_window_recovered, fragment_number_recovered), "wb") as fragment_file_recovered:
-			# 			fragment_file_recovered.write(data_recovered[0])
-			# 			fragment_file_recovered.write(data_recovered[1])
-			# 		os.chdir(cwd)
-			# 		print("[ALLX] Recovered")
-			# 		bitmap = replace_bit(bitmap, fragment_number_recovered, '1')
-			# 		with open("bitmap", "w") as bitmap_file:
-			# 			bitmap_file.write(bitmap)
-			#
-			# 	# If the index-th fragment's FCN does not have a fragment number, then it is invalid
-			# 	except KeyError:
-			# 		print("No fragment to be recovered")
-			# 		continue
-			#
-			# 	# If no fragment was received, something nasty happened.
-			# 	except socket.timeout:
-			# 		print("Timed out")
-			# 		exit(1)
-
-			# if '0' in bitmap_ack and not fragment_message.is_all_1():
-			# 	print("A resent fragment has been lost. What should I do?")
-			#	exit(1)
 
 		# If the last received fragment is an All-0 and every fragment has been received,
 		# send empty ACK and reinitialize variables for next loop
@@ -568,14 +525,12 @@ while True:
 		# If the last received fragment is an All-1, start reassembling.
 		if fragment_message.is_all_1():
 
-			fragments = []
+			# if there is a gap between two received fragments, send ACK again.
 
-			# If everything has gone according to plan, there shouldn't be any empty spaces
-			# between two received fragments. So the first occurrence of an empty space should be the position
-			# of the final fragment.
-
-			i = 0
 			last_index = 0
+			last_received_index = 0
+			i = 0
+			j = 0
 
 			while i < 2 ** n - 1:
 				if os.path.getsize("./all_windows/window_%d/fragment_%d_%d" % (current_window, current_window, i)) == 0:
@@ -583,6 +538,34 @@ while True:
 					break
 				else:
 					i += 1
+
+			while j < 2 ** n - 1:
+				if os.path.exists("./all_windows/window_%d/fragment_%d_%d" % (current_window, current_window, j))\
+						and os.path.getsize("./all_windows/window_%d/fragment_%d_%d" % (current_window, current_window, j)) != 0:
+					last_received_index = j
+				j += 1
+
+			print(last_index)
+			print(last_received_index)
+
+			if last_index != last_received_index:
+				number_of_lost_fragments = bitmap_ack.count('0')
+				indices = find(bitmap_ack, '0')
+				print(indices)
+
+				# Create an ACK object and send it as bytes to the sender.
+				print("[ALLX] Sending NACK for lost fragments...")
+				ack = ACK(profile_downlink, rule_id, dtag, zfill(format(window_ack, 'b'), m), bitmap_ack, '0')
+				print(ack.to_string())
+				the_socket.sendto(ack.to_bytes(), address)
+				continue
+
+
+			fragments = []
+
+			# If everything has gone according to plan, there shouldn't be any empty spaces
+			# between two received fragments. So the first occurrence of an empty space should be the position
+			# of the final fragment.
 
 			print(current_window)
 			print(last_index)
