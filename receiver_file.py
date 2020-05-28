@@ -593,8 +593,6 @@ while True:
 				bitmap = ''
 				for k in range(profile_uplink.BITMAP_SIZE):
 					bitmap += '0'
-				# with open("bitmap", "w") as bitmap_file:
-				#	bitmap_file.write(bitmap)
 
 				last_ack = ACK(profile_downlink, rule_id, dtag, w, bitmap, '1')
 				the_socket.sendto(last_ack.to_bytes(), address)

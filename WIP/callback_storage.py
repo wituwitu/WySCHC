@@ -43,6 +43,11 @@ def callback_data(request):
 		bucket = storage_client.get_bucket(bucket_name)
 		blob = bucket.blob(blob_name)
 		return blob.size
+	def send_ack(request, ack):
+		device = request["device"]
+		response_dict = {device: {'downlinkData': ack.to_bytes()}}
+		response_json = json.dumps(response_dict)
+		return response_json
 
 
 	if request.method == 'POST':
@@ -406,20 +411,109 @@ def callback_data(request):
 			for j in range(2 ** n - 1):
 				fcn_dict[zfill(bin((2 ** n - 2) - (j % (2 ** n - 1)))[2:], 3)] = j
 
+			# A fragment has the format "fragment = [header, payload]".
+			data = [bytes([fragment[0]]), bytearray(fragment[1:])]
 
+			# Convert to a Fragment class for easier manipulation.
+			fragment_message = Fragment(profile_uplink, data)
+			current_window = int(fragment_message.header.W, 2)
 
+			bitmap = read_blob(BLOB_NAME, "all_windows/window_%d/bitmap_%d" % (current_window, current_window))
 
+			try:
+				fragment_number = fcn_dict[fragment_message.header.FCN]
 
-			print("Creating blob")
+				print("[RECV] This corresponds to the " + str(fragment_number) + "th fragment of the " + str(
+					current_window) + "th window.")
 
-			BLOB_NAME = 'test-blob'
-			BLOB_STR = '{"blob": "some json"}'
+				bitmap = replace_bit(bitmap, fragment_number, '1')
 
-			print("Uploading blob")
+				upload_blob(BUCKET_NAME, bitmap, "all_windows/window_%d/bitmap_%d" % (current_window, current_window))
+				upload_blob(BUCKET_NAME, data[0].decode("utf-8") + data[1].decode("utf-8"), "all_windows/window_%d/fragment_%d_%d" % (current_window, current_window, fragment_number))
 
-			upload_blob(BUCKET_NAME, BLOB_STR, BLOB_NAME)
+			except KeyError:
 
-			print("Success!")
+				print("[RECV] This seems to be the final fragment.")
+
+				bitmap = replace_bit(bitmap, len(bitmap) - 1, '1')
+				upload_blob(BUCKET_NAME, bitmap, "all_windows/window_%d/bitmap_%d" % (current_window, current_window))
+
+			rule_id = fragment_message.header.RULE_ID
+			dtag = fragment_message.header.DTAG
+			w = fragment_message.header.W
+
+			if fragment_message.is_all_0() or fragment_message.is_all_1():
+				for i in range(current_window + 1):
+					bitmap_ack = read_blob(BUCKET_NAME, "all_windows/window_%d/bitmap%d" (i, i))
+					window_ack = i
+					if '0' in bitmap_ack:
+						break
+
+				if '0' in bitmap_ack and fragment_message.is_all_0():
+					number_of_lost_fragments = bitmap_ack.count('0')
+					indices = find(bitmap_ack, '0')
+					print("[ALLX] Sending ACK for lost fragments...")
+					ack = ACK(profile_downlink, rule_id, dtag, zfill(format(window_ack, 'b'), m), bitmap_ack, '0')
+					response_json = send_ack(request_dict, ack)
+					return response_json, 200
+
+				if fragment_message.is_all_0() and bitmap[0] == '1' and all(bitmap):
+					print("[ALLX] Sending ACK after window...")
+					ack = ACK(profile_downlink, rule_id, dtag, w, bitmap, '0')
+					response_json = send_ack(request_dict, ack)
+					return response_json, 200
+
+				if fragment_message.is_all_1():
+					last_index = 0
+					last_received_index = 0
+					i = 0
+					j = 0
+
+					while i < 2 ** n - 1:
+						if size_blob(BUCKET_NAME, "all_windows/window%d/fragment%d_%d" % (current_window, current_window, i)) == 0:
+							last_index = i
+							break
+						else:
+							i += 1
+
+					while j < 2 ** n - 1:
+						if exists_blob(BUCKET_NAME, "all_windows/window_%d/fragment%d_%d" % (current_window, current_window, j)) and size_blob(BUCKET_NAME, "all_windows/window_%d/fragment%d_%d" % (current_window, current_window, j)) != 0:
+							last_received_index = j + 1
+						j += 1
+
+					if last_index != last_received_index:
+						number_of_lost_fragments = bitmap_ack.count('0')
+						indices = find(bitmap_ack, '0')
+
+						print("[ALLX] Sending NACK for lost fragments...")
+						ack = ACK(profile_downlink, rule_id, dtag, zfill(format(window_ack, 'b'), m), bitmap_ack, '0')
+						response_json = send_ack(request_dict, ack)
+						return response_json, 200
+
+					else:
+						fragments = []
+						upload_blob(BUCKET_NAME, data[0].decode("utf-8") + data[1].decode("utf-8"), "all_windows/window_%d/fragment_%d_%d" % (current_window, current_window, last_index))
+
+						for i in range(2 ** m):
+							for j in range(2 ** n - 1):
+								fragment_file = open("./all_windows/window_%d/fragment_%d_%d" % (i, i, j), "r")
+								ultimate_header = fragment_file.read(1)
+								ultimate_payload = fragment_file.read()
+								ultimate_fragment = [ultimate_header.encode(), ultimate_payload.encode()]
+								fragments.append(ultimate_fragment)
+
+						print("[ALL1] Last fragment. Reassembling...")
+						reassembler = Reassembler(profile_uplink, fragments)
+						payload = bytearray(reassembler.reassemble())
+						upload_blob(BLOB_NAME, payload.decode("utf-8"), "PAYLOAD")
+
+						print("[ALL1] Reassembled: Sending last ACK")
+						bitmap = ''
+						for k in range(profile_uplink.BITMAP_SIZE):
+							bitmap += '0'
+						last_ack = ACK(profile_downlink, rule_id, dtag, w, bitmap, '1')
+						response_json = send_ack(request_dict, last_ack)
+						return response_json, 200
 
 			return '', 204
 		else:
