@@ -4,14 +4,12 @@ import socket
 import sys
 import os
 import glob
-import requests
-import json
 
 from Entities.Reassembler import Reassembler
 from Entities.Sigfox import Sigfox
 from Messages.ACK import ACK
 from Messages.Fragment import Fragment
-from functions import *
+from old_stuff.functions import *
 
 
 def insert_index(list, pos, elmt):

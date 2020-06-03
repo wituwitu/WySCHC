@@ -1,7 +1,5 @@
-from Messages import SCHC_Frag_Message
 from Messages.Header import Header
-from Messages.Payload import Payload
-from functions import *
+from old_stuff.functions import *
 
 class Fragment:
 

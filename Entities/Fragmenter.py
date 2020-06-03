@@ -2,7 +2,7 @@
 
 from math import ceil, floor
 from Messages.Header import Header
-from functions import *
+from old_stuff.functions import *
 
 class Fragmenter:
 	profile = None
