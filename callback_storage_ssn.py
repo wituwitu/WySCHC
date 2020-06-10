@@ -458,24 +458,8 @@ def callback_data(request):
 					return response_json, 200
 
 				if fragment_message.is_all_1():
-					last_index = 0
-					last_received_index = 0
-					i = 0
-					j = 0
 
-					while i < 2 ** n - 1:
-						if size_blob(BUCKET_NAME, "all_windows/window%d/fragment%d_%d" % (current_window, current_window, i)) == 0:
-							last_index = i
-							break
-						else:
-							i += 1
-
-					while j < 2 ** n - 1:
-						if exists_blob(BUCKET_NAME, "all_windows/window_%d/fragment%d_%d" % (current_window, current_window, j)) and size_blob(BUCKET_NAME, "all_windows/window_%d/fragment%d_%d" % (current_window, current_window, j)) != 0:
-							last_received_index = j + 1
-						j += 1
-
-					if last_index != last_received_index:
+					if (sigfox_sequence_number - last_sequence_number) != 1:
 						print("[ALLX] Sending NACK for lost fragments...")
 						ack = ACK(profile_downlink, rule_id, dtag, zfill(format(window_ack, 'b'), m), bitmap_ack, '0')
 						response_json = send_ack(request_dict, ack)
