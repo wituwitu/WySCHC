@@ -2,18 +2,22 @@
 
 ## Overview
 
-This is a basic implementation of the SCHC F/R protocol for large packets and an emulated uplink loss rate. It is intended for use in the Sigfox network, but the ultimate 
-goal is to use it under *any* LPWAN techology. You can read more about SCHC and its parameters for the Sigfox network
+This is a basic implementation of the SCHC F/R protocol for large packets and an integration with the Google Cloud
+Platform (GCP) framework, using Cloud Functions and Cloud Storage.
+It is intended for use in the Sigfox network, but the ultimate goal is to use it under *any*
+LPWAN techology. You can read more about SCHC and its parameters for the Sigfox network
 in these links:
 
-https://tools.ietf.org/html/draft-ietf-lpwan-ipv6-static-context-hc-21
-https://tools.ietf.org/html/draft-ietf-lpwan-schc-over-sigfox-00
+* https://www.rfc-editor.org/rfc/rfc8724.html
+* https://tools.ietf.org/html/draft-ietf-lpwan-schc-over-sigfox-00
 
 ## Structure
 
 The code makes use of Python classes for easier message manipulation. The SCHC messages carry lots of different
 parameters inside their headers depending on their types. The classes are grouped inside the "Messages" and the
 "Entities" folders. I'm currently working in the codes found inside the "WIP" folder, so they shall be ignored for the time being.
+
+This code also uses GCP methods (more on this soon...)
 
 ### Messages
 
@@ -69,98 +73,9 @@ printed on the terminals, so you can see how do they work. The receiver will wri
 changed manually modifying the extension of the output file in the code. Then, the sender will compare the original file with the output. If everything has gone
 according to plan, it will print "True" as its last words.
 
-**Note: The following sections were written for the last IETF Hackathon in Singapore, so they may not work anymore.**
+## Online testing
 
-### Sigfox backend execution (offline)
-
-This part of the README assumes that you have a Sigfox backend accound, an activated Pycom board with a SiPy module (or any module that
-supports Sigfox sockets), and ATOM with the pymakr plugin installed. Ensure that you can see messages sent by your device in your Sigfox backend. So far this project makes use of the Sigfox network.
-
-Important: This project has not been tested online. The project tried to use the Sigfox network using a Pycom board with a SiPy module, but many communication
-errors were had. A more recent module will be used for online testing.
-
-To bypass this problem, here are the instructions to run this project in an offline manner, but using the Sigfox backend
-to recover messages using the Sigfox API.
-
-#### Getting API access from Sigfox
-
-* Log in to the Sigfox backend
-* Follow the instructions from the following link to grant you
-API access. Use Read & Write roles.
-  * https://support.sigfox.com/docs/api-credential-creation
-* Write your API user's **login** and **password** strings.
-* Go to the **Device** tab and write the ID of your device.
-
-You now have the essential information for fetching Sigfox messages from your machine using HTTP requests.
-Now we need to send a fragmented message to the Sigfox network.
-
-#### Sending fragments using ATOM and pymakr
-
-Choose a small file that you want to transmit using SCHC F/R over the Sigfox network. This part of the process is
-**tedious**, so use a really small file (for this tutorial I used a 52 bytes file.). **You will be sending the fragments
-manually**.
-
-The reason you have to do this manually is because I've tried doing it in a loop but the pycom board freezes.
-
-Execute the sender script with the verbose flag:
-
-```
-python sender.py [IP] [PORT] [FILENAME] -v
-```
-
-You will notice that it prints
-
-```
-nth fragment:
-<fragment>
-Sending...
-progress, percent
-```
-
-Write down **every fragment** in order. Then open ATOM with the pymakr plugin with your board connected
-and execute the following lines, replacing `<YOUR_RCZ>`:
-
-```
-from network import Sigfox
-import socket
-import binascii
-import time
-
-sigfox = Sigfox(mode=Sigfox.SIGFOX, rcz=Sigfox.<YOUR_RCZ>)
-s.setblocking(True)
-s.setsockopt(socket.SOL_SIGFOX, socket.SO_RX, False)
-s.settimeout(10)
-```
-
-Now, for every fragment you wrote, execute the next line:
-
-```
-s.send(<fragment>)
-```
-
-Check if the Sigfox network has received the fragment using the Sigfox backend messages tab. If it did, continue. If 
-the fragment you just sent does not appear in a while, try again. Repeat until the last fragment.
-
-#### Reassembling the files locally
-
-Now you shall see that the Sigfox backend has received all the fragments. So now we need to reassemble them.
-
-The script for doing this is `receiver_backend.py`. Grab your API credentials and execute the script as follows, 
-replacing `[LIMIT]` with the number of fragments you just sent:
-
-```
-python receiver_backend.py [DEVICE ID] [LIMIT] [USER] [PASS]
-```
-
-This shall fetch the fragments from the Sigfox API using HTTP GET requests, print them on the console and
-then start reassembling the packet using SCHC F/R rules, then output an extensionless file. Add the extension
-manually.
-
-All this work you did will be automated in the future, I promise.
-
-## Future work
-
-The main goal is to get this code running in Google Cloud Platform, using Cloud Functions and the Sigfox backend. More on this soon.
+This project is currently being tested within the GCP framework. More on this soon.
 
 ## Author
 

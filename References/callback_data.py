@@ -1,20 +1,3 @@
-# Copyright 2018 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the 'License');
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an 'AS IS' BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-import sys
-
-
 def callback_data(request):
 	# [START functions_callback_data]
 	"""HTTP Cloud Function.
@@ -80,8 +63,7 @@ def callback_data(request):
 						return '', 204
 					else:
 						device = request_dict['device']
-						response_dict = {}
-						response_dict[device] = {'downlinkData': e[ds_property]}
+						response_dict = {device: {'downlinkData': e[ds_property]}}
 						response_json = json.dumps(response_dict)
 						print('Sending downlink message: {}'.format(response_json))
 						return response_json, 200

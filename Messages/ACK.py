@@ -31,8 +31,6 @@ class ACK:
 
         # print("ACK is now " + str(len(self.header + self.padding)) + " bits long")
 
-    def to_string(self):
-        return self.header + self.padding
 
     def to_bytes(self):
         return self.header + self.padding
