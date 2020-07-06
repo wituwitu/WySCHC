@@ -9,6 +9,13 @@ from Entities.Fragmenter import Fragmenter
 from Entities.Sigfox import Sigfox
 from Messages.Fragment import Fragment
 
+
+def zfill(string, width):
+	if len(string) < width:
+		return ("0" * (width - len(string))) + string
+	else:
+		return string
+
 print("This is the SENDER script for a Sigfox Uplink transmission example")
 
 if len(sys.argv) < 4:

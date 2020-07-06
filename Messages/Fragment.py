@@ -1,5 +1,10 @@
 from Messages.Header import Header
-from old_stuff.functions import *
+
+def zfill(string, width):
+    if len(string) < width:
+        return ("0" * (width - len(string))) + string
+    else:
+        return string
 
 class Fragment:
 
@@ -31,15 +36,9 @@ class Fragment:
         fcn = str(header[self.rule_id_size + self.t + self.m:self.rule_id_size + self.t + self.m + self.n])
         c = ""
 
-        # print(rule_id)
-        # print(dtag)
-        # print(window)
-        # print(fcn)
-        # print(c)
 
         self.header = Header(self.profile, rule_id, dtag, window, fcn, c)
 
-        # print(payload)
         self.payload = payload
 
     def test(self):
@@ -59,3 +58,5 @@ class Fragment:
         for x in fcn:
             fcn_set.add(x)
         return len(fcn_set) == 1 and "0" in fcn_set
+
+

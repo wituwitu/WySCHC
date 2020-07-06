@@ -68,9 +68,11 @@ was added, so `example.txt` is the optimal file to be treated with this implemen
 python sender.py [IP] [PORT] [FILENAME] [-hv]
 ```
 
-As it's an offline testing, the communication shall be completed in no time. The log of both scripts will be
-printed on the terminals, so you can see how do they work. The receiver will write a text file, but this is easily 
-changed manually modifying the extension of the output file in the code. Then, the sender will compare the original file with the output. If everything has gone
+As it's an offline testing, the communication shall be completed in no time. Many directories and subdirectories will
+be created. The log of both scripts will be printed on the terminals, so you can see how they work. The receiver will 
+write a text file, but this is easily 
+changed manually modifying the extension of the output file in the code. Then, the sender will compare the original 
+file with the output. If everything has gone
 according to plan, it will print "True" as its last words.
 
 ## Online testing

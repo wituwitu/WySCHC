@@ -9,8 +9,12 @@ from Entities.Reassembler import Reassembler
 from Entities.Sigfox import Sigfox
 from Messages.ACK import ACK
 from Messages.Fragment import Fragment
-from old_stuff.functions import *
 
+def zfill(string, width):
+    if len(string) < width:
+        return ("0" * (width - len(string))) + string
+    else:
+        return string
 
 def insert_index(list, pos, elmt):
 	while len(list) < pos:

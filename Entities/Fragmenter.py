@@ -2,7 +2,12 @@
 
 from math import ceil, floor
 from Messages.Header import Header
-from old_stuff.functions import *
+
+def zfill(string, width):
+    if len(string) < width:
+        return ("0" * (width - len(string))) + string
+    else:
+        return string
 
 class Fragmenter:
 	profile = None
